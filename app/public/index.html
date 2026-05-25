@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Observability App</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <h1>Observability Test App</h1>
+
+  <section>
+    <h2>Register</h2>
+    <label>Username <input id="reg-username"></label>
+    <label>Password <input id="reg-password" type="password"></label>
+    <button id="btn-register">Register</button>
+    <div id="reg-result"></div>
+  </section>
+
+  <section>
+    <h2>Login</h2>
+    <label>Username <input id="login-username"></label>
+    <label>Password <input id="login-password" type="password"></label>
+    <button id="btn-login">Login</button>
+    <div id="login-result"></div>
+  </section>
+
+  <section>
+    <h2>Users</h2>
+    <button id="btn-list">List users</button>
+    <ul id="users-list"></ul>
+  </section>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    $('btn-register').addEventListener('click', async () => {
+      const username = $('reg-username').value;
+      const password = $('reg-password').value;
+      const res = await fetch('/register', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({username,password}) });
+      const data = await res.json().catch(()=>({}));
+      $('reg-result').textContent = res.status===201 ? 'Registrado' : (data.error||'Erro');
+    });
+
+    $('btn-login').addEventListener('click', async () => {
+      const username = $('login-username').value;
+      const password = $('login-password').value;
+      const res = await fetch('/login', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({username,password}) });
+      const data = await res.json().catch(()=>({}));
+      $('login-result').textContent = data.success ? 'Login OK' : (data.error||'Falha');
+    });
+
+    $('btn-list').addEventListener('click', async () => {
+      const res = await fetch('/users');
+      const list = await res.json().catch(()=>[]);
+      const ul = $('users-list'); ul.innerHTML='';
+      list.forEach(u=>{
+        const li = document.createElement('li');
+        li.textContent = `${u.id}: ${u.username}`;
+        ul.appendChild(li);
+      });
+    });
+  </script>
+</body>
+</html>

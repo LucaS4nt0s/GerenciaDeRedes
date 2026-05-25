@@ -1,0 +1,106 @@
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+	background: linear-gradient(135deg, #f2f6fb 0%, #e7eef7 100%);
+	color: #1f2937;
+	min-height: 100vh;
+	padding: 24px;
+}
+
+h1 {
+	margin: 0 0 20px;
+	font-size: 2rem;
+	color: #0f3d66;
+}
+
+h2 {
+	margin: 0 0 12px;
+	font-size: 1.2rem;
+	color: #1d4f7a;
+}
+
+section {
+	background: #ffffff;
+	border: 1px solid #dbe6f2;
+	border-radius: 12px;
+	box-shadow: 0 8px 18px rgba(16, 45, 78, 0.08);
+	padding: 16px;
+	margin-bottom: 16px;
+	max-width: 560px;
+}
+
+label {
+	display: block;
+	margin: 10px 0;
+	font-weight: 600;
+	color: #334155;
+}
+
+input {
+	width: 100%;
+	margin-top: 6px;
+	padding: 10px 12px;
+	border: 1px solid #b6c7da;
+	border-radius: 8px;
+	background: #fbfdff;
+	font-size: 0.95rem;
+}
+
+input:focus {
+	outline: 2px solid #8ec5ff;
+	border-color: #5ba8f2;
+}
+
+button {
+	margin-top: 8px;
+	background: #1d6fb8;
+	color: #ffffff;
+	border: 0;
+	border-radius: 8px;
+	padding: 10px 14px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+button:hover {
+	background: #165e9f;
+}
+
+#reg-result,
+#login-result {
+	margin-top: 10px;
+	min-height: 20px;
+	font-weight: 600;
+	color: #184f7f;
+}
+
+#users-list {
+	margin: 12px 0 0;
+	padding-left: 18px;
+}
+
+#users-list li {
+	margin: 6px 0;
+	padding: 6px 8px;
+	border: 1px solid #d5e1ed;
+	border-radius: 6px;
+	background: #f8fbff;
+}
+
+@media (max-width: 640px) {
+	body {
+		padding: 14px;
+	}
+
+	h1 {
+		font-size: 1.6rem;
+	}
+
+	section {
+		padding: 14px;
+	}
+}

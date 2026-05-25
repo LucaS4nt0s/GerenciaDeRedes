@@ -5,8 +5,8 @@
     "name": "admq8xb",
     "namespace": "default",
     "uid": "f359697c-b2d0-4d5b-982d-a0028da56abd",
-    "resourceVersion": "1779561175427989",
-    "generation": 25,
+    "resourceVersion": "1779745863526010",
+    "generation": 28,
     "creationTimestamp": "2026-04-15T12:27:18Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "4261485441486848"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "",
       "grafana.app/saved-from-ui": "Grafana v13.0.0 (e9de482b)",
       "grafana.app/updatedBy": "user:cfj5vuu2yknwge",
-      "grafana.app/updatedTimestamp": "2026-05-23T18:32:55Z"
+      "grafana.app/updatedTimestamp": "2026-05-25T21:51:03Z"
     }
   },
   "spec": {
@@ -67,7 +67,7 @@
                       },
                       "spec": {
                         "editorMode": "code",
-                        "expr": "rate(process_cpu_seconds_total{job=\"node\"}[1m])",
+                        "expr": "rate(app_process_cpu_seconds_total{job=\"app\"}[1m])",
                         "legendFormat": "Uso de CPU",
                         "range": true
                       }
@@ -105,7 +105,8 @@
               },
               "fieldConfig": {
                 "defaults": {
-                  "unit": "decmbytes",
+                  "unit": "percentunit",
+                  "min": 0,
                   "thresholds": {
                     "mode": "absolute",
                     "steps": [
@@ -131,7 +132,7 @@
                     "barAlignment": 0,
                     "barWidthFactor": 0.6,
                     "drawStyle": "line",
-                    "fillOpacity": 0,
+                    "fillOpacity": 30,
                     "gradientMode": "none",
                     "hideFrom": {
                       "legend": false,
@@ -1354,7 +1355,7 @@
     "tags": [],
     "timeSettings": {
       "timezone": "browser",
-      "from": "now-30m",
+      "from": "now-5m",
       "to": "now",
       "autoRefresh": "",
       "autoRefreshIntervals": [

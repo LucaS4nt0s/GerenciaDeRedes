@@ -1,84 +1,155 @@
 # Observability App
 
-Aplicacao Node.js com CRUD de usuarios, autenticacao simples, metricas Prometheus e simulacao de incidentes para laboratorio de observabilidade.
+Aplicação Node.js para laboratório de observabilidade. Inclui CRUD de
+usuários, autenticação simples, métricas Prometheus e simulações de
+incidentes para uso em workshops ou testes.
 
-## Rotas Disponiveis
+## Rotas principais
 
-### Rotas funcionais (CRUD e login)
+- `POST /register` — cria um usuário em memória.
+  - Body: `{ "username": "usuario", "password": "senha" }`
+- `POST /login` — autentica por `username` e `password`.
+  - Quando o incidente `login-failure` está ativo, retorna `500`.
+- `GET /users` — lista usuários (não retorna senhas).
+- `PUT /users/:id` — atualiza usuário (body opcional).
+- `DELETE /users/:id` — remove usuário.
+- `GET /metrics` — expõe métricas no formato Prometheus.
 
-1. `POST /register`
-- Cria um novo usuario em memoria.
-- Body esperado: `{ "username": "usuario", "password": "senha" }`
-- Respostas comuns:
-- `201` usuario criado
-- `400` campos obrigatorios ausentes
-- `409` usuario ja existe
+## Endpoints de incidentes / simulações
 
-2. `POST /login`
-- Realiza autenticacao simples por `username` e `password`.
-- Body esperado: `{ "username": "usuario", "password": "senha" }`
-- Respostas comuns:
-- `200` autenticado
-- `401` credenciais invalidas
-- `500` quando incidente de falha forcada de login estiver ativo
+- `GET /simulate-load` — gera carga de CPU no servidor.
+  - Query opcional: `iterations` (ex.: `?iterations=7000000`).
+- `GET /simulate-error` — força uma exceção (erro 500) para testes.
+- `POST /internal/incidents/login-failure` — ativa/desativa falha de
+  login forçada.
+  - Body opcional: `{ "enabled": true|false }`. Sem body, o endpoint
+    alterna o estado atual.
+- `POST /internal/incidents/latency` — ativa/desativa latência artificial
+  e configura parâmetros de instabilidade.
+  - Body exemplo: `{ "enabled": true, "delayMs": 1500, "jitterMs": 500,
+    "failureRatePercent": 20, "statusCode": 503 }`.
+- `POST /internal/incidents/reset` — restaura configuração padrão (desativa
+  incidentes).
 
-3. `GET /users`
-- Lista usuarios cadastrados (sem retornar senha).
+## Testando os erros simulados via Console do navegador
 
-4. `PUT /users/:id`
-- Atualiza dados de um usuario pelo `id`.
-- Body aceito: `{ "username": "novo", "password": "nova" }` (campos opcionais)
+Abra o DevTools do navegador (F12) e use a aba Console para colar os
+comandos abaixo. Substitua `http://localhost:3002` se o app estiver em
+outra porta/host.
 
-5. `DELETE /users/:id`
-- Remove usuario pelo `id`.
+### 1) Simular carga de CPU (`/simulate-load`)
 
-### Rotas de observabilidade
+```javascript
+fetch('http://localhost:3002/simulate-load?iterations=7000000')
+  .then(r => r.text())
+  .then(console.log)
+  .catch(console.error)
+```
 
-6. `GET /metrics`
-- Exibe metricas no formato Prometheus para coleta.
-- Inclui metricas padrao do Node.js e metricas customizadas da aplicacao.
+Observação: o pico de CPU ocorre no servidor. Use `docker stats`, Task
+Manager ou Prometheus para observar o impacto.
 
-### Rotas de simulacao de incidentes
+### 2) Forçar erro (exceção) (`/simulate-error`)
 
-7. `GET /simulate-load`
-- Executa carga de CPU para gerar pico de uso.
-- Query opcional: `iterations` (exemplo: `/simulate-load?iterations=7000000`).
+```javascript
+fetch('http://localhost:3002/simulate-error')
+  .then(async res => {
+    console.log('status', res.status);
+    console.log(await res.text());
+  })
+  .catch(err => console.error('fetch error', err))
+```
 
-8. `GET /simulate-error`
-- Forca uma excecao para testar logs de erro e tratamento global.
+Resultado esperado: resposta com status 500 e registro do erro nos
+logs do servidor (Loki/Grafana se configurado).
 
-9. `POST /internal/incidents/login-failure`
-- Liga/desliga falha forcada no login.
-- Body opcional: `{ "enabled": true|false }`
-- Sem body, alterna automaticamente o estado atual.
+### 3) Habilitar/desabilitar falha de login
 
-10. `POST /internal/incidents/latency`
-- Liga/desliga latencia artificial e configura parametros de instabilidade.
-- Body opcional:
-- `{ "enabled": true|false, "delayMs": 1500, "jitterMs": 500, "failureRatePercent": 20, "statusCode": 503 }`
+Habilitar explicitamente:
 
-11. `POST /internal/incidents/reset`
-- Restaura configuracao padrao dos incidentes (desativa falha de login e latencia).
+```javascript
+fetch('http://localhost:3002/internal/incidents/login-failure', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ enabled: true })
+}).then(r => r.json()).then(console.log)
+```
 
-## Exemplo rapido com curl
+Alternar (sem body):
 
-1. Registrar usuario:
+```javascript
+fetch('http://localhost:3002/internal/incidents/login-failure', { method: 'POST' })
+  .then(r => r.json()).then(console.log)
+```
+
+Testar efeito no `/login` (após habilitar):
+
+```javascript
+fetch('http://localhost:3002/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ username: 'luca', password: '123' })
+}).then(async res => {
+  console.log('status', res.status);
+  console.log(await res.text());
+}).catch(console.error)
+```
+
+Quando `login-failure` estiver ativo, `/login` deve retornar `500`.
+
+### 4) Habilitar latência e instabilidade (`/internal/incidents/latency`)
+
+```javascript
+fetch('http://localhost:3002/internal/incidents/latency', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ enabled: true, delayMs: 1500, jitterMs: 500,
+    failureRatePercent: 20, statusCode: 503 })
+}).then(r => r.json()).then(console.log)
+```
+
+Medir latência em uma chamada simples:
+
+```javascript
+const start = performance.now();
+fetch('http://localhost:3002/users').then(async res => {
+  console.log('status', res.status);
+  console.log('ms', performance.now() - start);
+  console.log(await res.text());
+}).catch(console.error)
+```
+
+Com latência ativa, as respostas ficarão mais lentas e podem falhar com
+o código configurado.
+
+### 5) Resetar incidentes (`/internal/incidents/reset`)
+
+```javascript
+fetch('http://localhost:3002/internal/incidents/reset', { method: 'POST' })
+  .then(r => r.json()).then(console.log)
+```
+
+Após o reset, os endpoints voltam ao comportamento normal.
+
+## Exemplos rápidos com curl
+
+Registrar usuário:
 
 ```bash
 curl -X POST http://localhost:3002/register \
-	-H "Content-Type: application/json" \
-	-d '{"username":"luca","password":"123"}'
+  -H "Content-Type: application/json" \
+  -d '{"username":"luca","password":"123"}'
 ```
 
-2. Login:
+Login:
 
 ```bash
 curl -X POST http://localhost:3002/login \
-	-H "Content-Type: application/json" \
-	-d '{"username":"luca","password":"123"}'
+  -H "Content-Type: application/json" \
+  -d '{"username":"luca","password":"123"}'
 ```
 
-3. Listar usuarios:
+Listar usuários:
 
 ```bash
 curl http://localhost:3002/users
@@ -92,12 +163,9 @@ Suba toda a stack a partir da raiz do projeto:
 docker compose up --build
 ```
 
-Servicos expostos no host:
+Serviços expostos no host:
 
-- App: `http://localhost:3002`
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000`
-- Loki: `http://localhost:3100`
-
-Dentro da rede do Compose, o Prometheus coleta o app em `app:3000/metrics`.
-
+- App: http://localhost:3002
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000
+- Loki: http://localhost:3100

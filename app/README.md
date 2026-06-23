@@ -109,7 +109,7 @@ fetch('http://localhost:3002/internal/incidents/latency', {
 ```
 
 Medir latência em uma chamada simples:
-
+  
 ```javascript
 const start = performance.now();
 fetch('http://localhost:3002/users').then(async res => {

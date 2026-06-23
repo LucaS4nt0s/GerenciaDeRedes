@@ -4,6 +4,7 @@
 const express = require('express');
 const client = require('prom-client');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -70,9 +71,256 @@ const simulateLoadIterations = new client.Counter({
 	help: 'Total iterations executed by the load simulator'
 });
 
+// --- Métricas de Produto ---
+
+const appProductsTotal = new client.Gauge({
+	name: 'app_products_total',
+	help: 'Number of registered products'
+});
+
+const appProductsByCategory = new client.Gauge({
+	name: 'app_products_by_category',
+	help: 'Number of products per category',
+	labelNames: ['category']
+});
+
+const appProductViewsTotal = new client.Counter({
+	name: 'app_product_views_total',
+	help: 'Total product views',
+	labelNames: ['product_id']
+});
+
+// --- Métricas de Carrinho ---
+
+const appCartAddsTotal = new client.Counter({
+	name: 'app_cart_adds_total',
+	help: 'Total items added to cart'
+});
+
+const appCartRemovesTotal = new client.Counter({
+	name: 'app_cart_removes_total',
+	help: 'Total items removed from cart'
+});
+
+const appCartsActive = new client.Gauge({
+	name: 'app_carts_active',
+	help: 'Number of active carts'
+});
+
+const appCartAbandonmentRate = new client.Gauge({
+	name: 'app_cart_abandonment_rate',
+	help: 'Cart abandonment rate (abandoned / created)'
+});
+
+const appCartSize = new client.Histogram({
+	name: 'app_cart_size',
+	help: 'Distribution of items per cart',
+	buckets: [1, 2, 3, 5, 10, 20]
+});
+
+const appCartIncidentActive = new client.Gauge({
+	name: 'app_cart_latency_incident_active',
+	help: 'Whether the cart latency incident is active'
+});
+
+// --- Métricas de Pagamento ---
+
+const appPaymentAttemptsTotal = new client.Counter({
+	name: 'app_payment_attempts_total',
+	help: 'Total payment attempts',
+	labelNames: ['method', 'status']
+});
+
+const appPaymentDurationSeconds = new client.Histogram({
+	name: 'app_payment_duration_seconds',
+	help: 'Payment processing duration in seconds',
+	labelNames: ['method'],
+	buckets: [0.05, 0.1, 0.25, 0.5, 1, 2, 5]
+});
+
+const appPaymentIncidentActive = new client.Gauge({
+	name: 'app_payment_incident_active',
+	help: 'Whether the payment incident is active'
+});
+
+// --- Métricas de Estoque ---
+
+const appInventoryLowProducts = new client.Gauge({
+	name: 'app_inventory_low_products',
+	help: 'Number of products with low stock (< 5)'
+});
+
+const appInventoryOutOfStockProducts = new client.Gauge({
+	name: 'app_inventory_out_of_stock_products',
+	help: 'Number of products out of stock'
+});
+
+const appInventoryIncidentActive = new client.Gauge({
+	name: 'app_inventory_incident_active',
+	help: 'Whether the inventory incident is active'
+});
+
+// --- Métricas de Pedido ---
+
+const appOrdersTotal = new client.Counter({
+	name: 'app_orders_total',
+	help: 'Total orders placed',
+	labelNames: ['status']
+});
+
+const appOrderValueBytes = new client.Histogram({
+	name: 'app_order_value',
+	help: 'Distribution of order values',
+	buckets: [50, 100, 200, 500, 1000, 2000, 5000]
+});
+
+const appCheckoutDurationSeconds = new client.Histogram({
+	name: 'app_checkout_duration_seconds',
+	help: 'Checkout duration in seconds',
+	labelNames: ['status'],
+	buckets: [0.1, 0.5, 1, 2, 5, 10]
+});
+
+const appConversionRatePercent = new client.Gauge({
+	name: 'app_conversion_rate_percent',
+	help: 'Conversion rate (orders / visits)'
+});
+
+appPaymentIncidentActive.set(0);
+appInventoryIncidentActive.set(0);
+
 // Base em memória para o CRUD de usuários.
 const users = [];
 let nextId = 1;
+let nextProductId = 1;
+
+// Base em memória para o catálogo de produtos.
+const products = [];
+
+// Seed de produtos iniciais para simular um ecommerce real.
+function seedProducts() {
+	const seedData = [
+		{ name: 'Smartphone Galaxy S25', description: 'Smartphone topo de linha com 256GB', category: 'eletronicos', price: 4999.90, stock: 15 },
+		{ name: 'Notebook UltraBook Pro 16', description: 'Notebook 16GB RAM, 512GB SSD', category: 'eletronicos', price: 8499.90, stock: 8 },
+		{ name: 'Fone Bluetooth ANC', description: 'Fone com cancelamento de ruído ativo', category: 'eletronicos', price: 599.90, stock: 25 },
+		{ name: 'Smart TV 55 4K', description: 'Smart TV 55 polegadas 4K HDR', category: 'eletronicos', price: 3499.90, stock: 10 },
+		{ name: 'Tablet 10 Polegadas', description: 'Tablet Android 128GB, tela 10"', category: 'eletronicos', price: 1899.90, stock: 12 },
+		{ name: 'Camiseta Algodão Premium', description: 'Camiseta masculina algodão penteado', category: 'roupas', price: 89.90, stock: 50 },
+		{ name: 'Vestido Floral Verão', description: 'Vestido feminino floral, tecido leve', category: 'roupas', price: 149.90, stock: 30 },
+		{ name: 'Tênis Esportivo Run', description: 'Tênis para corrida, amortecimento Pro', category: 'roupas', price: 399.90, stock: 20 },
+		{ name: 'Jaqueta Corta-Vento', description: 'Jaqueta impermeável e leve', category: 'roupas', price: 259.90, stock: 15 },
+		{ name: 'Calça Jeans Skinny', description: 'Calça jeans stretch, conforto total', category: 'roupas', price: 179.90, stock: 35 },
+		{ name: 'Sofá 3 Lugares', description: 'Sofá retrátil e reclinável em couro', category: 'casa', price: 2999.90, stock: 5 },
+		{ name: 'Mesa de Jantar 6 Lugares', description: 'Mesa de madeira maciça com 6 cadeiras', category: 'casa', price: 2199.90, stock: 4 },
+		{ name: 'Luminária de Mesa LED', description: 'Luminária com dimerizador e luz ajustável', category: 'casa', price: 129.90, stock: 40 },
+		{ name: 'Jogo de Panelas Antiaderente', description: 'Conjunto 5 peças em aço inox', category: 'casa', price: 349.90, stock: 18 },
+		{ name: 'Tapete Sala 2x3m', description: 'Tapete felpado decorativo 2x3 metros', category: 'casa', price: 449.90, stock: 7 },
+		{ name: 'Livro Programação em JavaScript', description: 'Guia completo para desenvolvimento web', category: 'livros', price: 89.90, stock: 100 },
+		{ name: 'Livro Inteligência Emocional', description: 'Melhore suas habilidades socioemocionais', category: 'livros', price: 49.90, stock: 80 },
+		{ name: 'Kindle Paperwhite', description: 'Leitor digital 16GB, iluminação embutida', category: 'livros', price: 499.90, stock: 22 },
+		{ name: 'Livro Design Patterns', description: 'Padrões de projeto em Java moderno', category: 'livros', price: 129.90, stock: 45 },
+		{ name: 'Box Trilogia Clássica', description: 'Coleção 3 livros em capa dura', category: 'livros', price: 119.90, stock: 30 },
+		{ name: 'Vinho Tinto Cabernet', description: 'Vinho chileno premium 750ml', category: 'alimentos', price: 79.90, stock: 60 },
+		{ name: 'Café Gourmet 250g', description: 'Café especial arábica torra média', category: 'alimentos', price: 34.90, stock: 90 },
+		{ name: 'Cesta de Café da Manhã', description: 'Cesta completa com 15 itens', category: 'alimentos', price: 149.90, stock: 25 },
+		{ name: 'Azeite de Oliva Extra Virgem', description: 'Azeite português 500ml', category: 'alimentos', price: 59.90, stock: 40 },
+		{ name: 'Chocolate Artesanal 70%', description: 'Chocolate belga ao leite 150g', category: 'alimentos', price: 29.90, stock: 120 },
+	];
+
+	for (const data of seedData) {
+		products.push({ id: nextProductId++, ...data });
+	}
+
+	appProductsTotal.set(products.length);
+
+	const categoryCount = {};
+	for (const p of products) {
+		categoryCount[p.category] = (categoryCount[p.category] || 0) + 1;
+	}
+	for (const [cat, count] of Object.entries(categoryCount)) {
+		appProductsByCategory.labels(cat).set(count);
+	}
+
+	console.log(JSON.stringify({ level: 'info', event: 'products_seeded', count: products.length }));
+}
+
+seedProducts();
+
+// --- Carrinho de Compras ---
+
+const carts = new Map(); // key: cartId (string), value: cart object
+let cartAbandonedCount = 0;
+let cartCreatedCount = 0;
+const CART_EXPIRY_MS = 30 * 60 * 1000; // 30 min
+
+// Timer para expirar carrinhos abandonados
+setInterval(() => {
+	const now = Date.now();
+	for (const [cartId, cart] of carts) {
+		if (now - cart.lastActivityAt > CART_EXPIRY_MS) {
+			console.log(JSON.stringify({
+				level: 'info',
+				event: 'cart_abandoned',
+				cart_id: cartId,
+				user_id: cart.userId,
+				items_count: cart.items.length,
+				total: cart.items.reduce((sum, i) => sum + (i.price * i.quantity), 0)
+			}));
+			carts.delete(cartId);
+			cartAbandonedCount++;
+			appCartsActive.set(carts.size);
+			updateCartAbandonmentRate();
+		}
+	}
+}, 30000);
+
+function getOrCreateCart(cartId, userId) {
+	if (!cartId) {
+		cartId = crypto.randomUUID();
+	}
+	let cart = carts.get(cartId);
+	if (!cart) {
+		cart = { cartId, userId: userId || null, items: [], createdAt: Date.now(), lastActivityAt: Date.now() };
+		carts.set(cartId, cart);
+		cartCreatedCount++;
+		appCartsActive.set(carts.size);
+	}
+	return cart;
+}
+
+function updateCartAbandonmentRate() {
+	const rate = cartCreatedCount > 0 ? (cartAbandonedCount / cartCreatedCount) * 100 : 0;
+	appCartAbandonmentRate.set(rate);
+}
+
+function calculateCartTotal(items) {
+	return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+}
+
+// --- Pedidos ---
+
+let nextOrderId = 1;
+const orders = [];
+
+// --- Helpers de Inventário ---
+
+function updateInventoryMetrics() {
+	let lowCount = 0;
+	let outCount = 0;
+	for (const p of products) {
+		if (p.stock === 0) outCount++;
+		if (p.stock > 0 && p.stock < 5) lowCount++;
+	}
+	appInventoryLowProducts.set(lowCount);
+	appInventoryOutOfStockProducts.set(outCount);
+}
+
+function getEffectiveStock(product) {
+	if (incidentState.inventoryZeroEnabled) return 0;
+	return product.stock;
+}
+
+appCartIncidentActive.set(0);
 
 // Estado dos incidentes simulados. Essas flags alteram o comportamento da API.
 const incidentState = {
@@ -81,7 +329,14 @@ const incidentState = {
 	latencyDelayMs: 1500,
 	latencyJitterMs: 500,
 	latencyFailureRatePercent: 20,
-	latencyFailureStatus: 503
+	latencyFailureStatus: 503,
+	paymentFailureRatePercent: 10,
+	paymentDelayMs: 500,
+	paymentEnabled: true,
+	inventoryZeroEnabled: false,
+	cartLatencyEnabled: false,
+	cartLatencyDelayMs: 3000,
+	promotionEnabled: false
 };
 
 // Janelas móveis para calcular erros por minuto e taxa de erro.
@@ -160,7 +415,7 @@ function recordError(now = Date.now()) {
 // Não aplicamos latência artificial em rotas operacionais ou internas.
 function shouldBypassLatency(req) {
 	const pathName = req.path || '';
-	return pathName === '/metrics' || pathName === '/simulate-load' || pathName === '/simulate-error' || pathName.startsWith('/internal/incidents');
+	return pathName === '/metrics' || pathName === '/simulate-load' || pathName === '/simulate-error' || pathName.startsWith('/internal/incidents') || pathName.startsWith('/health/');
 }
 
 // Calcula um delay artificial com jitter para simular instabilidade.
@@ -189,6 +444,7 @@ function applyResponseMetrics(req, res, startedAt) {
 	console.log(JSON.stringify({
 		level: 'info',
 		event: 'request_completed',
+		correlation_id: req.correlationId,
 		method: req.method,
 		route,
 		status: statusCode,
@@ -207,6 +463,15 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Middleware de Correlation ID: garante que toda requisição tenha um identificador único.
+app.use((req, res, next) => {
+	req.correlationId = req.headers['x-correlation-id'] || crypto.randomUUID();
+	res.setHeader('x-correlation-id', req.correlationId);
+	req.userId = req.headers['x-user-id'] ? Number(req.headers['x-user-id']) : null;
+	req.cartId = req.headers['x-cart-id'] || null;
+	next();
+});
+
 // Middleware de latência: se o incidente estiver ativo, atrasa a resposta e pode falhar.
 app.use((req, res, next) => {
 	if (!incidentState.latencyEnabled || shouldBypassLatency(req)) {
@@ -220,6 +485,7 @@ app.use((req, res, next) => {
 			console.error(JSON.stringify({
 				level: 'error',
 				event: 'latency_incident_failure',
+				correlation_id: req.correlationId,
 				method: req.method,
 				path: req.originalUrl,
 				delay_ms: delayMs,
@@ -326,6 +592,728 @@ app.delete('/users/:id', (req, res) => {
 	return res.status(204).end();
 });
 
+// --- Rotas de Produtos ---
+
+// Listar produtos com filtros opcionais.
+app.get('/products', (req, res) => {
+	let filtered = products;
+
+	if (req.query.category) {
+		filtered = filtered.filter((p) => p.category === req.query.category);
+	}
+	if (req.query.min_price) {
+		const min = Number(req.query.min_price);
+		if (Number.isFinite(min)) {
+			filtered = filtered.filter((p) => p.price >= min);
+		}
+	}
+	if (req.query.max_price) {
+		const max = Number(req.query.max_price);
+		if (Number.isFinite(max)) {
+			filtered = filtered.filter((p) => p.price <= max);
+		}
+	}
+	if (req.query.q) {
+		const term = req.query.q.toLowerCase();
+		filtered = filtered.filter((p) =>
+			p.name.toLowerCase().includes(term) || p.description.toLowerCase().includes(term)
+		);
+	}
+
+	// Incrementa visualização para cada produto retornado (simula page view)
+	for (const p of filtered) {
+		appProductViewsTotal.labels(String(p.id)).inc();
+	}
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'products_listed',
+		count: filtered.length,
+		total: products.length
+	}));
+
+	return res.json(filtered);
+});
+
+// Detalhes de um produto específico.
+app.get('/products/:id', (req, res) => {
+	const id = Number(req.params.id);
+	const product = products.find((p) => p.id === id);
+
+	if (!product) {
+		return res.status(404).json({ error: 'product not found' });
+	}
+
+	appProductViewsTotal.labels(String(id)).inc();
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'product_viewed',
+		product_id: id,
+		product_name: product.name,
+		price: product.price
+	}));
+
+	return res.json(product);
+});
+
+// Criar um novo produto.
+app.post('/products', (req, res) => {
+	const { name, description, category, price, stock } = req.body || {};
+
+	if (!name || typeof name !== 'string') {
+		return res.status(400).json({ error: 'name is required' });
+	}
+	if (!category || typeof category !== 'string') {
+		return res.status(400).json({ error: 'category is required' });
+	}
+	const parsedPrice = Number(price);
+	if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+		return res.status(400).json({ error: 'valid price is required' });
+	}
+	const parsedStock = Number.isFinite(Number(stock)) ? Math.max(0, Number(stock)) : 0;
+
+	const product = {
+		id: nextProductId++,
+		name: name.trim(),
+		description: description || '',
+		category: category.trim().toLowerCase(),
+		price: parsedPrice,
+		stock: parsedStock
+	};
+
+	products.push(product);
+	appProductsTotal.set(products.length);
+	appProductsByCategory.labels(product.category).inc();
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'product_created',
+		product_id: product.id,
+		product_name: product.name,
+		category: product.category,
+		price: product.price,
+		stock: product.stock
+	}));
+
+	return res.status(201).json(product);
+});
+
+// Atualizar um produto existente.
+app.put('/products/:id', (req, res) => {
+	const id = Number(req.params.id);
+	const product = products.find((p) => p.id === id);
+
+	if (!product) {
+		return res.status(404).json({ error: 'product not found' });
+	}
+
+	const oldCategory = product.category;
+
+	if (req.body.name && typeof req.body.name === 'string') {
+		product.name = req.body.name.trim();
+	}
+	if (req.body.description !== undefined) {
+		product.description = req.body.description;
+	}
+	if (req.body.category && typeof req.body.category === 'string') {
+		product.category = req.body.category.trim().toLowerCase();
+	}
+	if (req.body.price !== undefined) {
+		const parsedPrice = Number(req.body.price);
+		if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+			return res.status(400).json({ error: 'invalid price' });
+		}
+		product.price = parsedPrice;
+	}
+	if (req.body.stock !== undefined) {
+		const parsedStock = Number(req.body.stock);
+		if (!Number.isFinite(parsedStock) || parsedStock < 0) {
+			return res.status(400).json({ error: 'invalid stock' });
+		}
+		product.stock = parsedStock;
+	}
+
+	// Atualiza métricas de categoria se mudou
+	if (oldCategory !== product.category) {
+		appProductsByCategory.labels(oldCategory).dec();
+		appProductsByCategory.labels(product.category).inc();
+	}
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'product_updated',
+		product_id: id,
+		product_name: product.name,
+		category: product.category,
+		price: product.price,
+		stock: product.stock
+	}));
+
+	return res.json(product);
+});
+
+// Deletar um produto.
+app.delete('/products/:id', (req, res) => {
+	const id = Number(req.params.id);
+	const index = products.findIndex((p) => p.id === id);
+
+	if (index === -1) {
+		return res.status(404).json({ error: 'product not found' });
+	}
+
+	const removed = products.splice(index, 1)[0];
+	appProductsTotal.set(products.length);
+	appProductsByCategory.labels(removed.category).dec();
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'product_deleted',
+		product_id: id,
+		product_name: removed.name
+	}));
+
+	return res.status(204).end();
+});
+
+// --- Rotas de Carrinho ---
+
+// Adicionar item ao carrinho.
+app.post('/cart/add', (req, res) => {
+	const cartId = req.headers['x-cart-id'] || '';
+	const userId = req.userId;
+	const { productId, quantity } = req.body || {};
+
+	// Latência induzida por incidente de carrinho lento
+	if (incidentState.cartLatencyEnabled && incidentState.cartLatencyDelayMs > 0) {
+		const delay = incidentState.cartLatencyDelayMs + Math.floor(Math.random() * 500);
+		console.log(JSON.stringify({
+			level: 'warn',
+			event: 'cart_latency_incident_applied',
+			correlation_id: req.correlationId,
+			delay_ms: delay
+		}));
+	}
+
+	const parsedQty = Number.isFinite(Number(quantity)) ? Math.max(1, Number(quantity)) : 1;
+	const parsedProductId = Number(productId);
+
+	if (!Number.isFinite(parsedProductId)) {
+		return res.status(400).json({ error: 'productId is required' });
+	}
+
+	const product = products.find((p) => p.id === parsedProductId);
+	if (!product) {
+		return res.status(404).json({ error: 'product not found' });
+	}
+
+	const effectiveStock = getEffectiveStock(product);
+	if (effectiveStock < parsedQty) {
+		console.log(JSON.stringify({
+			level: 'warn',
+			event: 'cart_add_failed',
+			correlation_id: req.correlationId,
+			reason: 'insufficient_stock',
+			product_id: parsedProductId,
+			requested: parsedQty,
+			available: effectiveStock
+		}));
+		return res.status(409).json({ error: 'insufficient stock', available: effectiveStock });
+	}
+
+	const cart = getOrCreateCart(cartId, userId);
+	cart.lastActivityAt = Date.now();
+
+	// Aplica desconto de promoção se incidente estiver ativo
+	const effectivePrice = incidentState.promotionEnabled ? Number((product.price * 0.1).toFixed(2)) : product.price;
+
+	if (incidentState.promotionEnabled) {
+		console.log(JSON.stringify({
+			level: 'warn',
+			event: 'promotion_applied',
+			correlation_id: req.correlationId,
+			product_id: parsedProductId,
+			original_price: product.price,
+			discounted_price: effectivePrice,
+			discount_percent: 90
+		}));
+	}
+
+	const existingItem = cart.items.find((item) => item.productId === parsedProductId);
+	if (existingItem) {
+		existingItem.quantity += parsedQty;
+		if (!incidentState.promotionEnabled) {
+			existingItem.price = product.price;
+		}
+	} else {
+		cart.items.push({
+			productId: parsedProductId,
+			name: product.name,
+			price: effectivePrice,
+			quantity: parsedQty
+		});
+	}
+
+	appCartAddsTotal.inc(parsedQty);
+	appCartSize.observe(cart.items.length);
+
+	res.setHeader('x-cart-id', cart.cartId);
+	res.setHeader('x-correlation-id', req.correlationId);
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'cart_item_added',
+		correlation_id: req.correlationId,
+		cart_id: cart.cartId,
+		product_id: parsedProductId,
+		product_name: product.name,
+		quantity: parsedQty,
+		unit_price: effectivePrice,
+		cart_items_count: cart.items.length,
+		cart_total: calculateCartTotal(cart.items)
+	}));
+
+	return res.json({
+		cartId: cart.cartId,
+		items: cart.items,
+		total: calculateCartTotal(cart.items)
+	});
+});
+
+// Remover item do carrinho.
+app.post('/cart/remove', (req, res) => {
+	const cartId = req.headers['x-cart-id'] || '';
+	const { productId, quantity } = req.body || {};
+
+	if (!cartId) {
+		return res.status(400).json({ error: 'x-cart-id header is required' });
+	}
+
+	const cart = carts.get(cartId);
+	if (!cart) {
+		return res.status(404).json({ error: 'cart not found' });
+	}
+
+	const parsedProductId = Number(productId);
+	if (!Number.isFinite(parsedProductId)) {
+		return res.status(400).json({ error: 'productId is required' });
+	}
+
+	cart.lastActivityAt = Date.now();
+	const itemIndex = cart.items.findIndex((item) => item.productId === parsedProductId);
+
+	if (itemIndex === -1) {
+		return res.status(404).json({ error: 'item not found in cart' });
+	}
+
+	const parsedQty = Number.isFinite(Number(quantity)) ? Math.max(1, Number(quantity)) : cart.items[itemIndex].quantity;
+
+	if (parsedQty >= cart.items[itemIndex].quantity) {
+		cart.items.splice(itemIndex, 1);
+	} else {
+		cart.items[itemIndex].quantity -= parsedQty;
+	}
+
+	appCartRemovesTotal.inc(parsedQty);
+	appCartSize.observe(cart.items.length);
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'cart_item_removed',
+		cart_id: cartId,
+		product_id: parsedProductId,
+		quantity_removed: parsedQty,
+		cart_items_count: cart.items.length
+	}));
+
+	return res.json({
+		cartId: cart.cartId,
+		items: cart.items,
+		total: calculateCartTotal(cart.items)
+	});
+});
+
+// Atualizar quantidade de um item no carrinho.
+app.patch('/cart/item', (req, res) => {
+	const cartId = req.headers['x-cart-id'] || '';
+	const { productId, quantity } = req.body || {};
+
+	if (!cartId) {
+		return res.status(400).json({ error: 'x-cart-id header is required' });
+	}
+
+	const cart = carts.get(cartId);
+	if (!cart) {
+		return res.status(404).json({ error: 'cart not found' });
+	}
+
+	const parsedProductId = Number(productId);
+	const parsedQty = Number(quantity);
+
+	if (!Number.isFinite(parsedProductId) || !Number.isFinite(parsedQty) || parsedQty < 0) {
+		return res.status(400).json({ error: 'valid productId and quantity are required' });
+	}
+
+	cart.lastActivityAt = Date.now();
+	const item = cart.items.find((i) => i.productId === parsedProductId);
+
+	if (!item) {
+		return res.status(404).json({ error: 'item not found in cart' });
+	}
+
+	if (parsedQty === 0) {
+		cart.items.splice(cart.items.indexOf(item), 1);
+		appCartRemovesTotal.inc();
+	} else {
+		item.quantity = parsedQty;
+	}
+
+	appCartSize.observe(cart.items.length);
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'cart_item_updated',
+		cart_id: cartId,
+		product_id: parsedProductId,
+		new_quantity: parsedQty,
+		cart_items_count: cart.items.length
+	}));
+
+	return res.json({
+		cartId: cart.cartId,
+		items: cart.items,
+		total: calculateCartTotal(cart.items)
+	});
+});
+
+// Visualizar carrinho.
+app.get('/cart', (req, res) => {
+	const cartId = req.headers['x-cart-id'] || '';
+
+	if (!cartId) {
+		return res.json({ cartId: null, items: [], total: 0 });
+	}
+
+	const cart = carts.get(cartId);
+	if (!cart) {
+		return res.json({ cartId, items: [], total: 0 });
+	}
+
+	cart.lastActivityAt = Date.now();
+
+	return res.json({
+		cartId: cart.cartId,
+		items: cart.items,
+		total: calculateCartTotal(cart.items)
+	});
+});
+
+// Limpar carrinho.
+app.delete('/cart', (req, res) => {
+	const cartId = req.headers['x-cart-id'] || '';
+
+	if (!cartId) {
+		return res.status(200).json({ success: true });
+	}
+
+	const cart = carts.get(cartId);
+	if (cart) {
+		const itemCount = cart.items.length;
+		cart.items = [];
+		cart.lastActivityAt = Date.now();
+
+		console.log(JSON.stringify({
+			level: 'info',
+			event: 'cart_cleared',
+			cart_id: cartId,
+			removed_items: itemCount
+		}));
+	}
+
+	return res.json({ success: true });
+});
+
+// --- Rotas de Pagamento ---
+
+// Processar pagamento (gateway simulado).
+app.post('/payment/process', (req, res) => {
+	if (!incidentState.paymentEnabled) {
+		appPaymentAttemptsTotal.labels('unknown', 'failure').inc();
+		console.error(JSON.stringify({
+			level: 'error',
+			event: 'payment_failed',
+			correlation_id: req.correlationId,
+			reason: 'payment_disabled',
+			method: req.body?.method || 'unknown'
+		}));
+		return res.status(503).json({ error: 'payment gateway offline' });
+	}
+
+	const { method, amount } = req.body || {};
+	const validMethods = ['credit_card', 'pix', 'boleto', 'wallet'];
+	const paymentMethod = validMethods.includes(method) ? method : 'credit_card';
+
+	const paymentStart = Date.now();
+
+	// Latência simulada por método
+	const latencyMap = { pix: 200, credit_card: 1000, boleto: 50, wallet: 400 };
+	const baseDelay = incidentState.paymentDelayMs || latencyMap[paymentMethod] || 500;
+	const jitter = Math.floor(Math.random() * baseDelay * 0.4);
+	const totalDelay = baseDelay + jitter;
+
+	setTimeout(() => {
+		const durationMs = Date.now() - paymentStart;
+		const failureRoll = Math.random() * 100;
+		const willFail = failureRoll < incidentState.paymentFailureRatePercent;
+
+		if (willFail) {
+			appPaymentAttemptsTotal.labels(paymentMethod, 'failure').inc();
+			appPaymentDurationSeconds.labels(paymentMethod).observe(durationMs / 1000);
+
+			console.error(JSON.stringify({
+				level: 'error',
+				event: 'payment_failed',
+				correlation_id: req.correlationId,
+				method: paymentMethod,
+				amount,
+				duration_ms: durationMs,
+				failure_rate: incidentState.paymentFailureRatePercent
+			}));
+
+			return res.status(502).json({
+				success: false,
+				error: 'payment_declined',
+				method: paymentMethod
+			});
+		}
+
+		appPaymentAttemptsTotal.labels(paymentMethod, 'success').inc();
+		appPaymentDurationSeconds.labels(paymentMethod).observe(durationMs / 1000);
+
+		const paymentId = crypto.randomUUID().slice(0, 8);
+
+		console.log(JSON.stringify({
+			level: 'info',
+			event: 'payment_confirmed',
+			correlation_id: req.correlationId,
+			payment_id: paymentId,
+			method: paymentMethod,
+			amount,
+			duration_ms: durationMs
+		}));
+
+		return res.json({
+			success: true,
+			paymentId,
+			method: paymentMethod,
+			amount,
+			status: 'confirmed'
+		});
+	}, totalDelay);
+});
+
+// --- Rotas de Checkout e Pedidos ---
+
+// Finalizar compra (valida estoque → processa pagamento → cria pedido).
+app.post('/checkout', (req, res) => {
+	const checkoutStart = Date.now();
+	const cartId = req.headers['x-cart-id'] || '';
+	const userId = req.userId;
+	const paymentMethod = req.body?.paymentMethod || 'credit_card';
+
+	if (!cartId) {
+		return res.status(400).json({ error: 'x-cart-id header is required' });
+	}
+
+	const cart = carts.get(cartId);
+	if (!cart || cart.items.length === 0) {
+		return res.status(400).json({ error: 'cart is empty' });
+	}
+
+	cart.lastActivityAt = Date.now();
+
+	// Valida estoque
+	const stockErrors = [];
+	for (const item of cart.items) {
+		const product = products.find((p) => p.id === item.productId);
+		if (!product) {
+			stockErrors.push({ productId: item.productId, reason: 'not_found' });
+			continue;
+		}
+		const effectiveStock = getEffectiveStock(product);
+		if (effectiveStock < item.quantity) {
+			stockErrors.push({ productId: item.productId, name: product.name, available: effectiveStock, requested: item.quantity });
+		}
+	}
+
+	if (stockErrors.length > 0) {
+		console.error(JSON.stringify({
+			level: 'error',
+			event: 'checkout_failed',
+			correlation_id: req.correlationId,
+			reason: 'insufficient_stock',
+			errors: stockErrors
+		}));
+		return res.status(409).json({ error: 'insufficient stock', details: stockErrors });
+	}
+
+	const total = calculateCartTotal(cart.items);
+	const orderItems = cart.items.map((item) => ({ ...item }));
+
+	// Processa pagamento de forma síncrona simulada (para simplificar)
+	const validMethods = ['credit_card', 'pix', 'boleto', 'wallet'];
+	const method = validMethods.includes(paymentMethod) ? paymentMethod : 'credit_card';
+	const latencyMap = { pix: 200, credit_card: 1000, boleto: 50, wallet: 400 };
+	const paymentDelay = incidentState.paymentDelayMs || latencyMap[method] || 500;
+
+	const paymentWillFail = (Math.random() * 100) < incidentState.paymentFailureRatePercent;
+
+	if (paymentWillFail) {
+		appPaymentAttemptsTotal.labels(method, 'failure').inc();
+		appCheckoutDurationSeconds.labels('failed').observe((Date.now() - checkoutStart) / 1000);
+
+		console.error(JSON.stringify({
+			level: 'error',
+			event: 'checkout_failed',
+			correlation_id: req.correlationId,
+			reason: 'payment_declined',
+			method,
+			total
+		}));
+
+		return res.status(502).json({ error: 'payment declined', method });
+	}
+
+	// Decrementa estoque
+	for (const item of cart.items) {
+		const product = products.find((p) => p.id === item.productId);
+		if (product) {
+			product.stock = Math.max(0, product.stock - item.quantity);
+			if (product.stock < 5) {
+				console.log(JSON.stringify({
+					level: 'warn',
+					event: 'inventory_low',
+					correlation_id: req.correlationId,
+					product_id: product.id,
+					product_name: product.name,
+					remaining_stock: product.stock
+				}));
+			}
+			if (product.stock === 0) {
+				console.error(JSON.stringify({
+					level: 'error',
+					event: 'inventory_out_of_stock',
+					correlation_id: req.correlationId,
+					product_id: product.id,
+					product_name: product.name
+				}));
+			}
+		}
+	}
+	updateInventoryMetrics();
+
+	// Cria pedido
+	const order = {
+		id: nextOrderId++,
+		userId,
+		items: orderItems,
+		total,
+		paymentMethod: method,
+		status: 'confirmed',
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString()
+	};
+	orders.push(order);
+
+	appPaymentAttemptsTotal.labels(method, 'success').inc();
+	appOrdersTotal.labels('confirmed').inc();
+	appOrderValueBytes.observe(total);
+	appCheckoutDurationSeconds.labels('success').observe((Date.now() - checkoutStart) / 1000);
+
+	// Limpa carrinho
+	const convertedItems = cart.items.length;
+	cart.items = [];
+	cart.lastActivityAt = Date.now();
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'checkout_completed',
+		correlation_id: req.correlationId,
+		order_id: order.id,
+		user_id: userId,
+		total,
+		payment_method: method,
+		items_count: convertedItems,
+		duration_ms: Date.now() - checkoutStart
+	}));
+
+	return res.status(201).json(order);
+});
+
+// Listar pedidos.
+app.get('/orders', (req, res) => {
+	const userId = req.userId;
+	const userOrders = userId ? orders.filter((o) => o.userId === userId) : orders;
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'orders_listed',
+		correlation_id: req.correlationId,
+		count: userOrders.length
+	}));
+
+	return res.json(userOrders);
+});
+
+// Detalhes do pedido.
+app.get('/orders/:id', (req, res) => {
+	const id = Number(req.params.id);
+	const order = orders.find((o) => o.id === id);
+
+	if (!order) {
+		return res.status(404).json({ error: 'order not found' });
+	}
+
+	return res.json(order);
+});
+
+// Cancelar pedido.
+app.post('/orders/:id/cancel', (req, res) => {
+	const id = Number(req.params.id);
+	const order = orders.find((o) => o.id === id);
+
+	if (!order) {
+		return res.status(404).json({ error: 'order not found' });
+	}
+
+	if (order.status === 'cancelled') {
+		return res.status(409).json({ error: 'order already cancelled' });
+	}
+
+	order.status = 'cancelled';
+	order.updatedAt = new Date().toISOString();
+	appOrdersTotal.labels('cancelled').inc();
+
+	// Restaura estoque
+	for (const item of order.items) {
+		const product = products.find((p) => p.id === item.productId);
+		if (product) {
+			product.stock += item.quantity;
+		}
+	}
+	updateInventoryMetrics();
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'order_cancelled',
+		correlation_id: req.correlationId,
+		order_id: id,
+		total: order.total
+	}));
+
+	return res.json(order);
+});
+
 // Endpoint para gerar pico de CPU com cálculos intensivos.
 app.get('/simulate-load', (req, res) => {
 	const iterations = clampNumber(req.query.iterations, 5000000, 1000, 50000000);
@@ -402,6 +1390,80 @@ app.post('/internal/incidents/latency', (req, res) => {
 	});
 });
 
+// Controla o incidente de pagamento offline.
+app.post('/internal/incidents/payment', (req, res) => {
+	incidentState.paymentEnabled = parseBoolean(req.body?.enabled, !incidentState.paymentEnabled);
+	incidentState.paymentFailureRatePercent = clampNumber(req.body?.failureRatePercent, incidentState.paymentFailureRatePercent, 0, 100);
+	incidentState.paymentDelayMs = clampNumber(req.body?.delayMs, incidentState.paymentDelayMs, 0, 30000);
+	appPaymentIncidentActive.set(incidentState.paymentEnabled ? 0 : 1);
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'incident_payment_updated',
+		correlation_id: req.correlationId,
+		enabled: incidentState.paymentEnabled,
+		failure_rate_percent: incidentState.paymentFailureRatePercent,
+		delay_ms: incidentState.paymentDelayMs
+	}));
+
+	return res.json({
+		paymentEnabled: incidentState.paymentEnabled,
+		paymentFailureRatePercent: incidentState.paymentFailureRatePercent,
+		paymentDelayMs: incidentState.paymentDelayMs
+	});
+});
+
+// Controla o incidente de estoque zerado.
+app.post('/internal/incidents/inventory', (req, res) => {
+	incidentState.inventoryZeroEnabled = parseBoolean(req.body?.enabled, !incidentState.inventoryZeroEnabled);
+	appInventoryIncidentActive.set(incidentState.inventoryZeroEnabled ? 1 : 0);
+
+	updateInventoryMetrics();
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'incident_inventory_updated',
+		correlation_id: req.correlationId,
+		enabled: incidentState.inventoryZeroEnabled
+	}));
+
+	return res.json({ inventoryZeroEnabled: incidentState.inventoryZeroEnabled });
+});
+
+// Controla o incidente de latência no carrinho.
+app.post('/internal/incidents/cart-latency', (req, res) => {
+	incidentState.cartLatencyEnabled = parseBoolean(req.body?.enabled, !incidentState.cartLatencyEnabled);
+	incidentState.cartLatencyDelayMs = clampNumber(req.body?.delayMs, 3000, 100, 30000);
+	appCartIncidentActive.set(incidentState.cartLatencyEnabled ? 1 : 0);
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'incident_cart_latency_updated',
+		correlation_id: req.correlationId,
+		enabled: incidentState.cartLatencyEnabled,
+		delay_ms: incidentState.cartLatencyDelayMs
+	}));
+
+	return res.json({
+		cartLatencyEnabled: incidentState.cartLatencyEnabled,
+		cartLatencyDelayMs: incidentState.cartLatencyDelayMs
+	});
+});
+
+// Controla o incidente de promoção inesperada (90% de desconto).
+app.post('/internal/incidents/promotion', (req, res) => {
+	incidentState.promotionEnabled = parseBoolean(req.body?.enabled, !incidentState.promotionEnabled);
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'incident_promotion_updated',
+		correlation_id: req.correlationId,
+		enabled: incidentState.promotionEnabled
+	}));
+
+	return res.json({ promotionEnabled: incidentState.promotionEnabled });
+});
+
 // Restaura o comportamento normal da aplicação após testes de incidente.
 app.post('/internal/incidents/reset', (req, res) => {
 	incidentState.loginFailureEnabled = false;
@@ -410,11 +1472,39 @@ app.post('/internal/incidents/reset', (req, res) => {
 	incidentState.latencyJitterMs = 500;
 	incidentState.latencyFailureRatePercent = 20;
 	incidentState.latencyFailureStatus = 503;
+	incidentState.paymentEnabled = true;
+	incidentState.paymentFailureRatePercent = 10;
+	incidentState.paymentDelayMs = 500;
+	incidentState.inventoryZeroEnabled = false;
+	incidentState.cartLatencyEnabled = false;
+	incidentState.cartLatencyDelayMs = 3000;
+	incidentState.promotionEnabled = false;
 	loginIncidentGauge.set(0);
 	latencyIncidentGauge.set(0);
+	appPaymentIncidentActive.set(0);
+	appInventoryIncidentActive.set(0);
+	appCartIncidentActive.set(0);
 
-	console.log(JSON.stringify({ level: 'info', event: 'incidents_reset' }));
+	updateInventoryMetrics();
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'incidents_reset',
+		correlation_id: req.correlationId
+	}));
 	return res.json({ success: true });
+});
+
+// --- Health Checks ---
+
+app.get('/health/live', (req, res) => {
+	return res.json({ status: 'alive', uptime: process.uptime() });
+});
+
+app.get('/health/ready', (req, res) => {
+	const healthy = true; // poderia verificar dependências mockadas
+	const status = healthy ? 'ready' : 'not_ready';
+	return res.status(healthy ? 200 : 503).json({ status });
 });
 
 // Endpoint que o Prometheus coleta para ler as métricas da aplicação.
@@ -434,6 +1524,7 @@ app.use((error, req, res, next) => {
 	console.error(JSON.stringify({
 		level: 'error',
 		event: 'application_exception',
+		correlation_id: req.correlationId,
 		method: req.method,
 		path: req.originalUrl,
 		message: error.message,
@@ -462,6 +1553,100 @@ setInterval(() => {
 	console.log(JSON.stringify({ level: 'info', event: 'heartbeat', msg: 'periodic heartbeat' }));
 	console.error(JSON.stringify({ level: 'error', event: 'periodic_error', msg: 'periodic synthetic error' }));
 }, 5000);
+
+// --- Tráfego Sintético Automático ---
+
+let syntheticVisitCount = 0;
+let syntheticOrderCount = 0;
+
+function simulateTraffic() {
+	const correlationId = crypto.randomUUID();
+	const cartId = crypto.randomUUID();
+
+	syntheticVisitCount++;
+
+	// Visitar produtos aleatórios
+	const numProducts = 1 + Math.floor(Math.random() * 5);
+	const shuffled = [...products].sort(() => Math.random() - 0.5);
+	const viewed = shuffled.slice(0, numProducts);
+
+	for (const p of viewed) {
+		appProductViewsTotal.labels(String(p.id)).inc();
+	}
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'synthetic_visit',
+		correlation_id: correlationId,
+		cart_id: cartId,
+		products_viewed: viewed.length
+	}));
+
+	// Adicionar 1-3 itens ao carrinho
+	const numToAdd = 1 + Math.floor(Math.random() * 3);
+	let addCount = 0;
+	for (let i = 0; i < numToAdd && i < viewed.length; i++) {
+		const product = viewed[i];
+		const qty = 1 + Math.floor(Math.random() * 3);
+		const productStock = getEffectiveStock(product);
+		if (productStock >= qty) {
+			addCount += qty;
+		}
+	}
+	appCartAddsTotal.inc(addCount);
+
+	console.log(JSON.stringify({
+		level: 'info',
+		event: 'synthetic_cart_add',
+		correlation_id: correlationId,
+		cart_id: cartId,
+		items_added: addCount
+	}));
+
+	// 30% de chance de checkout (simular compra)
+	if (Math.random() < 0.3 && addCount > 0) {
+		const total = Math.floor(Math.random() * 5000) + 50;
+		syntheticOrderCount++;
+		appOrdersTotal.labels('confirmed').inc();
+		appOrderValueBytes.observe(total);
+		appCheckoutDurationSeconds.labels('success').observe(Math.random() * 2 + 0.3);
+
+		console.log(JSON.stringify({
+			level: 'info',
+			event: 'synthetic_checkout',
+			correlation_id: correlationId,
+			cart_id: cartId,
+			total,
+			items_count: addCount
+		}));
+	} else if (addCount > 0) {
+		// Carrinho abandonado
+		console.log(JSON.stringify({
+			level: 'warn',
+			event: 'synthetic_cart_abandoned',
+			correlation_id: correlationId,
+			cart_id: cartId,
+			items_count: addCount
+		}));
+	}
+
+	// 5% de chance de login failure simulado
+	if (Math.random() < 0.05) {
+		loginFailures.inc({ reason: 'invalid_credentials' });
+		console.error(JSON.stringify({
+			level: 'error',
+			event: 'synthetic_login_failure',
+			correlation_id: crypto.randomUUID(),
+			reason: 'invalid_credentials'
+		}));
+	}
+
+	// Atualiza métricas de conversão
+	const totalVisits = syntheticVisitCount;
+	appConversionRatePercent.set(totalVisits > 0 ? (syntheticOrderCount / totalVisits) * 100 : 0);
+}
+
+setInterval(simulateTraffic, 15000);
 
 const DEFAULT_PORT = 3000;
 const requestedPort = Number(process.env.PORT) || DEFAULT_PORT;

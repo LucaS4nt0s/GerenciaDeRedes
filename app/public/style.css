@@ -1,106 +1,333 @@
 * {
-	box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-	margin: 0;
-	font-family: "Segoe UI", "Trebuchet MS", sans-serif;
-	background: linear-gradient(135deg, #f2f6fb 0%, #e7eef7 100%);
-	color: #1f2937;
-	min-height: 100vh;
-	padding: 24px;
+  margin: 0;
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+  background: linear-gradient(135deg, #f2f6fb 0%, #e7eef7 100%);
+  color: #1f2937;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 24px;
 }
 
 h1 {
-	margin: 0 0 20px;
-	font-size: 2rem;
-	color: #0f3d66;
+  margin: 0;
+  font-size: 2rem;
+  color: #0f3d66;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: #4b6f8f;
+  font-size: 0.95rem;
 }
 
 h2 {
-	margin: 0 0 12px;
-	font-size: 1.2rem;
-	color: #1d4f7a;
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  color: #1d4f7a;
 }
 
-section {
-	background: #ffffff;
-	border: 1px solid #dbe6f2;
-	border-radius: 12px;
-	box-shadow: 0 8px 18px rgba(16, 45, 78, 0.08);
-	padding: 16px;
-	margin-bottom: 16px;
-	max-width: 560px;
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #dbe6f2;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(16, 45, 78, 0.08);
+  padding: 16px;
+}
+
+fieldset {
+  border: 1px solid #d5e1ed;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0;
+}
+
+legend {
+  font-weight: 600;
+  color: #1d4f7a;
+  font-size: 0.9rem;
+}
+
+.dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 label {
-	display: block;
-	margin: 10px 0;
-	font-weight: 600;
-	color: #334155;
+  display: block;
+  margin: 8px 0;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.85rem;
 }
 
-input {
-	width: 100%;
-	margin-top: 6px;
-	padding: 10px 12px;
-	border: 1px solid #b6c7da;
-	border-radius: 8px;
-	background: #fbfdff;
-	font-size: 0.95rem;
+input, select {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid #b6c7da;
+  border-radius: 8px;
+  background: #fbfdff;
+  font-size: 0.9rem;
 }
 
-input:focus {
-	outline: 2px solid #8ec5ff;
-	border-color: #5ba8f2;
+input:focus, select:focus {
+  outline: 2px solid #8ec5ff;
+  border-color: #5ba8f2;
 }
 
 button {
-	margin-top: 8px;
-	background: #1d6fb8;
-	color: #ffffff;
-	border: 0;
-	border-radius: 8px;
-	padding: 10px 14px;
-	font-weight: 600;
-	cursor: pointer;
+  background: #1d6fb8;
+  color: #ffffff;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 button:hover {
-	background: #165e9f;
+  background: #165e9f;
 }
 
-#reg-result,
-#login-result {
-	margin-top: 10px;
-	min-height: 20px;
-	font-weight: 600;
-	color: #184f7f;
+button.secondary {
+  background: #e2edf7;
+  color: #1d4f7a;
+}
+
+button.secondary:hover {
+  background: #d0e0f0;
+}
+
+button.full {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.inline-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+
+.inline-filters input, .inline-filters select {
+  width: auto;
+  flex: 1;
+  min-width: 80px;
+  margin: 0;
+}
+
+.inline-filters button {
+  flex: 0 0 auto;
+}
+
+.btns-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.result {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f4f8ff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: pre-line;
+  color: #184f7f;
+  min-height: 20px;
+}
+
+.grid-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.grid-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid #d5e1ed;
+  border-radius: 6px;
+  background: #f8fbff;
+  font-size: 0.85rem;
+}
+
+.grid-item strong {
+  min-width: 120px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #dee9f5;
+  color: #1d4f7a;
+}
+
+.tag-ok {
+  background: #d4edda;
+  color: #155724;
+}
+
+.tag-warn {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.stock-low {
+  color: #cc7a00;
+  font-weight: 700;
+}
+
+.stock-out {
+  color: #cc0000;
+  font-weight: 700;
 }
 
 #users-list {
-	margin: 12px 0 0;
-	padding-left: 18px;
+  margin: 8px 0 0;
+  padding-left: 18px;
 }
 
 #users-list li {
-	margin: 6px 0;
-	padding: 6px 8px;
-	border: 1px solid #d5e1ed;
-	border-radius: 6px;
-	background: #f8fbff;
+  margin: 4px 0;
+  padding: 4px 8px;
+  border: 1px solid #d5e1ed;
+  border-radius: 6px;
+  background: #f8fbff;
+  font-size: 0.85rem;
+}
+
+.incidents .incident-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eaf1fa;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.incidents .incident-row:last-child {
+  border-bottom: none;
+}
+
+.inc-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0 8px 12px;
+}
+
+.inc-sub label {
+  font-size: 0.78rem;
+  font-weight: 400;
+  margin: 0;
+  flex: 1;
+  min-width: 80px;
+}
+
+.inc-sub input {
+  padding: 4px 6px;
+  font-size: 0.8rem;
+  margin: 2px 0 0;
+}
+
+.toggle {
+  min-width: 95px;
+  text-align: center;
+  font-size: 0.78rem;
+  padding: 5px 10px;
+}
+
+.toggle.on {
+  background: #28a745;
+  color: #fff;
+}
+
+.toggle.on:hover {
+  background: #218838;
+}
+
+.toggle.off {
+  background: #dc3545;
+  color: #fff;
+}
+
+.toggle.off:hover {
+  background: #c82333;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dual {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
-	body {
-		padding: 14px;
-	}
+  body {
+    padding: 14px;
+  }
 
-	h1 {
-		font-size: 1.6rem;
-	}
+  h1 {
+    font-size: 1.5rem;
+  }
 
-	section {
-		padding: 14px;
-	}
+  .card {
+    padding: 12px;
+  }
+
+  .inline-filters {
+    flex-direction: column;
+  }
+
+  .inline-filters input, .inline-filters select {
+    width: 100%;
+  }
+
+  .btns-row {
+    flex-direction: column;
+  }
+
+  .btns-row button {
+    width: 100%;
+  }
 }

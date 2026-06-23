@@ -3,62 +3,399 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Observability App</title>
+  <title>Observability App — E-Commerce</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <h1>Observability Test App</h1>
+  <header>
+    <h1>Observability E-Commerce Lab</h1>
+    <p class="subtitle">Painel interativo para simular cenários de observabilidade</p>
+  </header>
 
-  <section>
-    <h2>Register</h2>
-    <label>Username <input id="reg-username"></label>
-    <label>Password <input id="reg-password" type="password"></label>
-    <button id="btn-register">Register</button>
-    <div id="reg-result"></div>
-  </section>
+  <div class="layout">
+    <!-- ========== COLUNA ESQUERDA ========== -->
+    <div class="col col-left">
 
-  <section>
-    <h2>Login</h2>
-    <label>Username <input id="login-username"></label>
-    <label>Password <input id="login-password" type="password"></label>
-    <button id="btn-login">Login</button>
-    <div id="login-result"></div>
-  </section>
+      <!-- --- Usuário --- -->
+      <section class="card">
+        <h2>👤 Usuário</h2>
+        <div class="dual">
+          <fieldset>
+            <legend>Registrar</legend>
+            <label>Username <input id="reg-username" /></label>
+            <label>Senha <input id="reg-password" type="password" /></label>
+            <button id="btn-register">Registrar</button>
+            <div id="reg-result" class="result"></div>
+          </fieldset>
+          <fieldset>
+            <legend>Login</legend>
+            <label>Username <input id="login-username" /></label>
+            <label>Senha <input id="login-password" type="password" /></label>
+            <button id="btn-login">Entrar</button>
+            <div id="login-result" class="result"></div>
+          </fieldset>
+        </div>
+        <button id="btn-list-users" class="secondary">Listar Usuários</button>
+        <ul id="users-list"></ul>
+      </section>
 
-  <section>
-    <h2>Users</h2>
-    <button id="btn-list">List users</button>
-    <ul id="users-list"></ul>
-  </section>
+      <!-- --- Produtos --- -->
+      <section class="card">
+        <h2>📦 Produtos</h2>
+
+        <div class="inline-filters">
+          <input id="prod-search" placeholder="Buscar..." />
+          <select id="prod-category">
+            <option value="">Todas categorias</option>
+            <option>eletronicos</option><option>roupas</option>
+            <option>casa</option><option>livros</option><option>alimentos</option>
+          </select>
+          <input id="prod-min" type="number" placeholder="Preço min" step="0.01" />
+          <input id="prod-max" type="number" placeholder="Preço max" step="0.01" />
+          <button id="btn-list-products">Filtrar</button>
+        </div>
+
+        <div id="products-list" class="grid-list"></div>
+
+        <details>
+          <summary>➕ Novo Produto</summary>
+          <div class="inline-filters">
+            <input id="np-name" placeholder="Nome" />
+            <input id="np-cat" placeholder="Categoria" />
+            <input id="np-price" type="number" placeholder="Preço" step="0.01" />
+            <input id="np-stock" type="number" placeholder="Estoque" />
+            <button id="btn-create-product">Criar</button>
+          </div>
+          <div id="product-result" class="result"></div>
+        </details>
+      </section>
+
+      <!-- --- Carrinho --- -->
+      <section class="card">
+        <h2>🛒 Carrinho</h2>
+        <div class="inline-filters">
+          <input id="cart-product-id" type="number" placeholder="ID do produto" />
+          <input id="cart-qty" type="number" placeholder="Qtd" value="1" min="1" />
+          <button id="btn-cart-add">Adicionar</button>
+        </div>
+        <div class="btns-row">
+          <button id="btn-cart-view" class="secondary">Ver Carrinho</button>
+          <button id="btn-cart-clear" class="secondary">Limpar</button>
+        </div>
+        <div id="cart-detail" class="result"></div>
+      </section>
+
+      <!-- --- Checkout / Pedidos --- -->
+      <section class="card">
+        <h2>📋 Checkout & Pedidos</h2>
+        <div class="inline-filters">
+          <select id="checkout-method">
+            <option value="credit_card">Cartão</option>
+            <option value="pix">Pix</option>
+            <option value="boleto">Boleto</option>
+            <option value="wallet">Wallet</option>
+          </select>
+          <button id="btn-checkout">Finalizar Compra</button>
+        </div>
+        <div id="checkout-result" class="result"></div>
+        <button id="btn-list-orders" class="secondary">Listar Pedidos</button>
+        <div id="orders-list" class="grid-list"></div>
+      </section>
+    </div>
+
+    <!-- ========== COLUNA DIREITA ========== -->
+    <div class="col col-right">
+
+      <!-- --- Pagamento --- -->
+      <section class="card">
+        <h2>💳 Pagamento (avulso)</h2>
+        <div class="inline-filters">
+          <select id="pay-method">
+            <option value="credit_card">Cartão</option>
+            <option value="pix">Pix</option>
+            <option value="boleto">Boleto</option>
+            <option value="wallet">Wallet</option>
+          </select>
+          <input id="pay-amount" type="number" placeholder="Valor" step="0.01" value="100" />
+          <button id="btn-pay">Processar</button>
+        </div>
+        <div id="pay-result" class="result"></div>
+      </section>
+
+      <!-- --- Incidentes --- -->
+      <section class="card incidents">
+        <h2>🚨 Incidentes</h2>
+
+        <div class="incident-row">
+          <span>Falha no Login</span>
+          <button id="inc-login" class="toggle off">Desativado</button>
+        </div>
+
+        <div class="incident-row">
+          <span>Latência</span>
+          <button id="inc-latency" class="toggle off">Desativado</button>
+        </div>
+        <div class="inc-sub">
+          <label>Delay (ms) <input id="inc-lat-delay" type="number" value="1500" /></label>
+          <label>Jitter (ms) <input id="inc-lat-jitter" type="number" value="500" /></label>
+          <label>Falha % <input id="inc-lat-fail" type="number" value="20" min="0" max="100" /></label>
+        </div>
+
+        <div class="incident-row">
+          <span>Pagamento Offline</span>
+          <button id="inc-payment" class="toggle on">Ativado</button>
+        </div>
+        <div class="inc-sub">
+          <label>Falha % <input id="inc-pay-fail" type="number" value="10" min="0" max="100" /></label>
+          <label>Delay (ms) <input id="inc-pay-delay" type="number" value="500" /></label>
+        </div>
+
+        <div class="incident-row">
+          <span>Estoque Zero</span>
+          <button id="inc-inventory" class="toggle off">Desativado</button>
+        </div>
+
+        <div class="incident-row">
+          <span>Latência no Carrinho</span>
+          <button id="inc-cart-lat" class="toggle off">Desativado</button>
+        </div>
+        <div class="inc-sub">
+          <label>Delay (ms) <input id="inc-cart-delay" type="number" value="3000" /></label>
+        </div>
+
+        <div class="incident-row">
+          <span>Promoção (90% off)</span>
+          <button id="inc-promotion" class="toggle off">Desativado</button>
+        </div>
+
+        <button id="btn-reset-incidents" class="secondary full">🔁 Resetar Todos</button>
+        <div id="inc-result" class="result"></div>
+      </section>
+
+      <!-- --- Utilitários --- -->
+      <section class="card">
+        <h2>⚙️ Utilitários</h2>
+        <div class="btns-row">
+          <button id="btn-simulate-load">Simular CPU</button>
+          <button id="btn-simulate-error" class="secondary">Simular Erro</button>
+          <button id="btn-health-live" class="secondary">Health Live</button>
+          <button id="btn-health-ready" class="secondary">Health Ready</button>
+        </div>
+        <div id="util-result" class="result"></div>
+      </section>
+    </div>
+  </div>
 
   <script>
-    const $ = id => document.getElementById(id);
-    $('btn-register').addEventListener('click', async () => {
-      const username = $('reg-username').value;
-      const password = $('reg-password').value;
-      const res = await fetch('/register', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({username,password}) });
-      const data = await res.json().catch(()=>({}));
-      $('reg-result').textContent = res.status===201 ? 'Registrado' : (data.error||'Erro');
-    });
+  // ===== Helpers =====
+  const $ = id => document.getElementById(id);
+  const json = r => r.json().catch(()=>({}));
+  const show = (el, msg) => { if (el) el.textContent = msg; };
+  let cartId = localStorage.getItem('cartId') || '';
 
-    $('btn-login').addEventListener('click', async () => {
-      const username = $('login-username').value;
-      const password = $('login-password').value;
-      const res = await fetch('/login', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({username,password}) });
-      const data = await res.json().catch(()=>({}));
-      $('login-result').textContent = data.success ? 'Login OK' : (data.error||'Falha');
-    });
+  function saveCartId(id) {
+    cartId = id;
+    if (id) localStorage.setItem('cartId', id); else localStorage.removeItem('cartId');
+  }
 
-    $('btn-list').addEventListener('click', async () => {
-      const res = await fetch('/users');
-      const list = await res.json().catch(()=>[]);
-      const ul = $('users-list'); ul.innerHTML='';
-      list.forEach(u=>{
-        const li = document.createElement('li');
-        li.textContent = `${u.id}: ${u.username}`;
-        ul.appendChild(li);
+  function headers(extra) {
+    const h = { 'content-type': 'application/json' };
+    if (cartId) h['x-cart-id'] = cartId;
+    return h;
+  }
+
+  function body(data) { return JSON.stringify(data); }
+
+  async function api(method, path, data) {
+    const opts = { method, headers: headers() };
+    if (data) opts.body = body(data);
+    const res = await fetch(path, opts);
+    const ct = res.headers.get('x-cart-id');
+    if (ct) saveCartId(ct);
+    return { res, data: await json(res) };
+  }
+
+  // ===== Usuário =====
+  $('btn-register').addEventListener('click', async () => {
+    const { res, data } = await api('POST', '/register', { username: $('reg-username').value, password: $('reg-password').value });
+    show($('reg-result'), res.ok ? `✅ Registrado (id: ${data.id})` : `❌ ${data.error}`);
+  });
+
+  $('btn-login').addEventListener('click', async () => {
+    const { res, data } = await api('POST', '/login', { username: $('login-username').value, password: $('login-password').value });
+    show($('login-result'), data.success ? '✅ Login OK' : `❌ ${data.error}`);
+  });
+
+  $('btn-list-users').addEventListener('click', async () => {
+    const { data } = await api('GET', '/users');
+    $('users-list').innerHTML = data.map(u => `<li>#${u.id} — ${u.username}</li>`).join('');
+  });
+
+  // ===== Produtos =====
+  async function renderProducts() {
+    const params = new URLSearchParams();
+    const q = $('prod-search').value; if (q) params.set('q', q);
+    const cat = $('prod-category').value; if (cat) params.set('category', cat);
+    const min = $('prod-min').value; if (min) params.set('min_price', min);
+    const max = $('prod-max').value; if (max) params.set('max_price', max);
+    const { data } = await api('GET', `/products?${params}`);
+    $('products-list').innerHTML = data.map(p => `
+      <div class="grid-item">
+        <strong>#${p.id} ${p.name}</strong>
+        <span class="tag">${p.category}</span>
+        <span>R$ ${Number(p.price).toFixed(2)}</span>
+        <span class="${p.stock === 0 ? 'stock-out' : p.stock < 5 ? 'stock-low' : ''}">Estoque: ${p.stock}</span>
+      </div>
+    `).join('');
+  }
+
+  $('btn-list-products').addEventListener('click', renderProducts);
+
+  $('btn-create-product').addEventListener('click', async () => {
+    const { res, data } = await api('POST', '/products', {
+      name: $('np-name').value,
+      category: $('np-cat').value,
+      price: Number($('np-price').value),
+      stock: Number($('np-stock').value) || 0
+    });
+    show($('product-result'), res.ok ? `✅ Criado #${data.id}` : `❌ ${data.error}`);
+    if (res.ok) { renderProducts(); $('np-name').value = $('np-cat').value = $('np-price').value = $('np-stock').value = ''; }
+  });
+
+  // ===== Carrinho =====
+  $('btn-cart-add').addEventListener('click', async () => {
+    const { res, data } = await api('POST', '/cart/add', {
+      productId: Number($('cart-product-id').value),
+      quantity: Number($('cart-qty').value) || 1
+    });
+    show($('cart-detail'), res.ok
+      ? `✅ Adicionado. Total: R$ ${data.total.toFixed(2)} (${data.items.length} itens)`
+      : `❌ ${data.error}`);
+    if (res.ok && data.cartId) saveCartId(data.cartId);
+  });
+
+  $('btn-cart-view').addEventListener('click', async () => {
+    const { data } = await api('GET', '/cart');
+    if (!data.items || !data.items.length) return show($('cart-detail'), '🛒 Carrinho vazio');
+    const lines = data.items.map(i => `• #${i.productId} ${i.name} — ${i.quantity}x R$ ${Number(i.price).toFixed(2)}`).join('\n');
+    show($('cart-detail'), `🛒 Carrinho (${data.items.length} itens):\n${lines}\nTotal: R$ ${data.total.toFixed(2)}`);
+  });
+
+  $('btn-cart-clear').addEventListener('click', async () => {
+    await api('DELETE', '/cart');
+    show($('cart-detail'), '🗑️ Carrinho limpo');
+  });
+
+  // ===== Checkout & Pedidos =====
+  $('btn-checkout').addEventListener('click', async () => {
+    const { res, data } = await api('POST', '/checkout', { paymentMethod: $('checkout-method').value });
+    show($('checkout-result'), res.ok
+      ? `✅ Pedido #${data.id} — R$ ${data.total.toFixed(2)}`
+      : `❌ ${data.error || 'falha no pagamento'}`);
+  });
+
+  $('btn-list-orders').addEventListener('click', async () => {
+    const { data } = await api('GET', '/orders');
+    $('orders-list').innerHTML = (Array.isArray(data) ? data : []).map(o => `
+      <div class="grid-item">
+        <strong>Pedido #${o.id}</strong>
+        <span class="tag ${o.status === 'confirmed' ? 'tag-ok' : 'tag-warn'}">${o.status}</span>
+        <span>R$ ${Number(o.total).toFixed(2)}</span>
+        <span>${o.items ? o.items.length : 0} itens</span>
+      </div>
+    `).join('');
+  });
+
+  // ===== Pagamento Avulso =====
+  $('btn-pay').addEventListener('click', async () => {
+    const { res, data } = await api('POST', '/payment/process', {
+      method: $('pay-method').value,
+      amount: Number($('pay-amount').value)
+    });
+    show($('pay-result'), res.ok
+      ? `✅ Pagamento ${data.paymentId} — ${data.status}`
+      : `❌ ${data.error}`);
+  });
+
+  // ===== Incidentes =====
+  const TOGGLE_API = {
+    'inc-login':      ['/internal/incidents/login-failure',  'loginFailureEnabled'],
+    'inc-latency':    ['/internal/incidents/latency',        'latencyEnabled'],
+    'inc-payment':    ['/internal/incidents/payment',        'paymentEnabled'],
+    'inc-inventory':  ['/internal/incidents/inventory',      'inventoryZeroEnabled'],
+    'inc-cart-lat':   ['/internal/incidents/cart-latency',   'cartLatencyEnabled'],
+    'inc-promotion':  ['/internal/incidents/promotion',      'promotionEnabled'],
+  };
+
+  Object.entries(TOGGLE_API).forEach(([btnId, [path, key]]) => {
+    $(btnId).addEventListener('click', async () => {
+      const btn = $(btnId);
+      const currentlyOn = btn.classList.contains('on');
+      const payload = { enabled: !currentlyOn };
+
+      // Extra fields for latency
+      if (path.includes('latency') && !path.includes('cart')) {
+        payload.delayMs = Number($('inc-lat-delay').value);
+        payload.jitterMs = Number($('inc-lat-jitter').value);
+        payload.failureRatePercent = Number($('inc-lat-fail').value);
+      }
+      if (path.includes('payment')) {
+        payload.failureRatePercent = Number($('inc-pay-fail').value);
+        payload.delayMs = Number($('inc-pay-delay').value);
+      }
+      if (path.includes('cart-latency')) {
+        payload.delayMs = Number($('inc-cart-delay').value);
+      }
+
+      const { res, data } = await api('POST', path, payload);
+      if (res.ok) {
+        const isOn = data.enabled !== undefined ? data.enabled : (data[key] !== undefined ? data[key] : !currentlyOn);
+        btn.classList.toggle('on', !!isOn);
+        btn.classList.toggle('off', !isOn);
+        btn.textContent = isOn ? 'Ativado' : 'Desativado';
+        show($('inc-result'), `✅ Incidente ${isOn ? 'ativado' : 'desativado'}`);
+      } else {
+        show($('inc-result'), `❌ ${data.error}`);
+      }
+    });
+  });
+
+  $('btn-reset-incidents').addEventListener('click', async () => {
+    const { res } = await api('POST', '/internal/incidents/reset');
+    if (res.ok) {
+      document.querySelectorAll('.toggle').forEach(btn => {
+        const isOnDefault = btn.id === 'inc-payment';
+        btn.classList.toggle('on', isOnDefault);
+        btn.classList.toggle('off', !isOnDefault);
+        btn.textContent = isOnDefault ? 'Ativado' : 'Desativado';
       });
-    });
+      show($('inc-result'), '✅ Todos incidentes resetados');
+    }
+  });
+
+  // ===== Utilitários =====
+  $('btn-simulate-load').addEventListener('click', async () => {
+    const { data } = await api('GET', '/simulate-load?iterations=5000000');
+    show($('util-result'), `⚡ Load concluído — checksum: ${data.checksum}`);
+  });
+
+  $('btn-simulate-error').addEventListener('click', async () => {
+    try { await fetch('/simulate-error'); } catch {}
+    show($('util-result'), '💥 Erro simulado (ver logs)');
+  });
+
+  $('btn-health-live').addEventListener('click', async () => {
+    const { data } = await api('GET', '/health/live');
+    show($('util-result'), `❤️ ${data.status} (uptime: ${Math.floor(data.uptime)}s)`);
+  });
+
+  $('btn-health-ready').addEventListener('click', async () => {
+    const { data } = await api('GET', '/health/ready');
+    show($('util-result'), `✅ ${data.status}`);
+  });
+
+  // ===== Init =====
+  renderProducts();
   </script>
 </body>
 </html>

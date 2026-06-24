@@ -50,5 +50,10 @@ services:
       - "3002:3000"
     restart: unless-stopped
 
+  test:
+    build: ./app
+    container_name: app-test
+    command: ["npx", "jest", "--passWithNoTests"]
+
 volumes:
   grafana_data:

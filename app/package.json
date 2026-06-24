@@ -4,7 +4,13 @@
   "description": "Simple app for observability lab",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.1.0"
   },
   "dependencies": {
     "express": "^4.22.2",

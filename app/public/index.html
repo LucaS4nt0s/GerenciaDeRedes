@@ -3,399 +3,522 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Observability App — E-Commerce</title>
+  <title>Observability Lab — E-Commerce</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header>
-    <h1>Observability E-Commerce Lab</h1>
-    <p class="subtitle">Painel interativo para simular cenários de observabilidade</p>
-  </header>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <div class="nav-logo">OL</div>
+        <span class="nav-title">Observability Lab</span>
+      </div>
+      <span class="nav-badge">E-Commerce Simulator</span>
+    </div>
+  </nav>
 
   <div class="layout">
-    <!-- ========== COLUNA ESQUERDA ========== -->
     <div class="col col-left">
 
-      <!-- --- Usuário --- -->
-      <section class="card">
-        <h2>👤 Usuário</h2>
-        <div class="dual">
-          <fieldset>
-            <legend>Registrar</legend>
-            <label>Username <input id="reg-username" /></label>
-            <label>Senha <input id="reg-password" type="password" /></label>
-            <button id="btn-register">Registrar</button>
-            <div id="reg-result" class="result"></div>
-          </fieldset>
-          <fieldset>
-            <legend>Login</legend>
-            <label>Username <input id="login-username" /></label>
-            <label>Senha <input id="login-password" type="password" /></label>
-            <button id="btn-login">Entrar</button>
-            <div id="login-result" class="result"></div>
-          </fieldset>
+      <section class="card card-user">
+        <div class="card-header">
+          <span class="card-icon">👤</span>
+          <h2>Usuário</h2>
         </div>
-        <button id="btn-list-users" class="secondary">Listar Usuários</button>
-        <ul id="users-list"></ul>
-      </section>
-
-      <!-- --- Produtos --- -->
-      <section class="card">
-        <h2>📦 Produtos</h2>
-
-        <div class="inline-filters">
-          <input id="prod-search" placeholder="Buscar..." />
-          <select id="prod-category">
-            <option value="">Todas categorias</option>
-            <option>eletronicos</option><option>roupas</option>
-            <option>casa</option><option>livros</option><option>alimentos</option>
-          </select>
-          <input id="prod-min" type="number" placeholder="Preço min" step="0.01" />
-          <input id="prod-max" type="number" placeholder="Preço max" step="0.01" />
-          <button id="btn-list-products">Filtrar</button>
-        </div>
-
-        <div id="products-list" class="grid-list"></div>
-
-        <details>
-          <summary>➕ Novo Produto</summary>
-          <div class="inline-filters">
-            <input id="np-name" placeholder="Nome" />
-            <input id="np-cat" placeholder="Categoria" />
-            <input id="np-price" type="number" placeholder="Preço" step="0.01" />
-            <input id="np-stock" type="number" placeholder="Estoque" />
-            <button id="btn-create-product">Criar</button>
+        <div class="card-accent card-accent-user"></div>
+        <div class="card-body">
+          <div class="dual">
+            <div class="form-block">
+              <h3>Registrar</h3>
+              <div class="field">
+                <label>Username</label>
+                <input id="reg-username" />
+              </div>
+              <div class="field">
+                <label>Senha</label>
+                <input id="reg-password" type="password" />
+              </div>
+              <button id="btn-register" class="btn btn-primary">Registrar</button>
+              <div id="reg-result" class="msg"></div>
+            </div>
+            <div class="form-block">
+              <h3>Login</h3>
+              <div class="field">
+                <label>Username</label>
+                <input id="login-username" />
+              </div>
+              <div class="field">
+                <label>Senha</label>
+                <input id="login-password" type="password" />
+              </div>
+              <button id="btn-login" class="btn btn-primary">Entrar</button>
+              <div id="login-result" class="msg"></div>
+            </div>
           </div>
-          <div id="product-result" class="result"></div>
-        </details>
+          <button id="btn-list-users" class="btn btn-secondary btn-sm">Listar Usuários</button>
+          <ul id="users-list"></ul>
+        </div>
       </section>
 
-      <!-- --- Carrinho --- -->
-      <section class="card">
-        <h2>🛒 Carrinho</h2>
-        <div class="inline-filters">
-          <input id="cart-product-id" type="number" placeholder="ID do produto" />
-          <input id="cart-qty" type="number" placeholder="Qtd" value="1" min="1" />
-          <button id="btn-cart-add">Adicionar</button>
+      <section class="card card-products">
+        <div class="card-header">
+          <span class="card-icon">📦</span>
+          <h2>Produtos</h2>
         </div>
-        <div class="btns-row">
-          <button id="btn-cart-view" class="secondary">Ver Carrinho</button>
-          <button id="btn-cart-clear" class="secondary">Limpar</button>
+        <div class="card-accent card-accent-products"></div>
+        <div class="card-body">
+          <div class="inline-group">
+            <input id="prod-search" placeholder="Buscar..." />
+            <select id="prod-category">
+              <option value="">Todas categorias</option>
+              <option>eletronicos</option><option>roupas</option>
+              <option>casa</option><option>livros</option><option>alimentos</option>
+            </select>
+            <input id="prod-min" type="number" placeholder="Preço min" step="0.01" />
+            <input id="prod-max" type="number" placeholder="Preço max" step="0.01" />
+            <button id="btn-list-products" class="btn btn-primary">Filtrar</button>
+          </div>
+          <div id="products-list" class="grid-list"></div>
+          <details>
+            <summary>➕ Novo Produto</summary>
+            <div class="inline-group">
+              <input id="np-name" placeholder="Nome" />
+              <input id="np-cat" placeholder="Categoria" />
+              <input id="np-price" type="number" placeholder="Preço" step="0.01" />
+              <input id="np-stock" type="number" placeholder="Estoque" />
+              <button id="btn-create-product" class="btn btn-success btn-sm">Criar</button>
+            </div>
+            <div id="product-result" class="msg"></div>
+          </details>
         </div>
-        <div id="cart-detail" class="result"></div>
       </section>
 
-      <!-- --- Checkout / Pedidos --- -->
-      <section class="card">
-        <h2>📋 Checkout & Pedidos</h2>
-        <div class="inline-filters">
-          <select id="checkout-method">
-            <option value="credit_card">Cartão</option>
-            <option value="pix">Pix</option>
-            <option value="boleto">Boleto</option>
-            <option value="wallet">Wallet</option>
-          </select>
-          <button id="btn-checkout">Finalizar Compra</button>
+      <section class="card card-cart">
+        <div class="card-header">
+          <span class="card-icon">🛒</span>
+          <h2>Carrinho</h2>
         </div>
-        <div id="checkout-result" class="result"></div>
-        <button id="btn-list-orders" class="secondary">Listar Pedidos</button>
-        <div id="orders-list" class="grid-list"></div>
+        <div class="card-accent card-accent-cart"></div>
+        <div class="card-body">
+          <div class="inline-group">
+            <input id="cart-product-id" type="number" placeholder="ID do produto" />
+            <input id="cart-qty" type="number" placeholder="Qtd" value="1" min="1" />
+            <button id="btn-cart-add" class="btn btn-primary">Adicionar</button>
+          </div>
+          <div class="btns-row">
+            <button id="btn-cart-view" class="btn btn-secondary">Ver Carrinho</button>
+            <button id="btn-cart-clear" class="btn btn-secondary">Limpar</button>
+          </div>
+          <div id="cart-detail" class="msg"></div>
+        </div>
+      </section>
+
+      <section class="card card-checkout">
+        <div class="card-header">
+          <span class="card-icon">📋</span>
+          <h2>Checkout & Pedidos</h2>
+        </div>
+        <div class="card-accent card-accent-checkout"></div>
+        <div class="card-body">
+          <div class="inline-group">
+            <select id="checkout-method">
+              <option value="credit_card">Cartão</option>
+              <option value="pix">Pix</option>
+              <option value="boleto">Boleto</option>
+              <option value="wallet">Wallet</option>
+            </select>
+            <button id="btn-checkout" class="btn btn-primary">Finalizar Compra</button>
+          </div>
+          <div id="checkout-result" class="msg"></div>
+          <button id="btn-list-orders" class="btn btn-secondary btn-sm">Listar Pedidos</button>
+          <div id="orders-list" class="grid-list"></div>
+        </div>
       </section>
     </div>
 
-    <!-- ========== COLUNA DIREITA ========== -->
     <div class="col col-right">
 
-      <!-- --- Pagamento --- -->
-      <section class="card">
-        <h2>💳 Pagamento (avulso)</h2>
-        <div class="inline-filters">
-          <select id="pay-method">
-            <option value="credit_card">Cartão</option>
-            <option value="pix">Pix</option>
-            <option value="boleto">Boleto</option>
-            <option value="wallet">Wallet</option>
-          </select>
-          <input id="pay-amount" type="number" placeholder="Valor" step="0.01" value="100" />
-          <button id="btn-pay">Processar</button>
+      <section class="card card-payment">
+        <div class="card-header">
+          <span class="card-icon">💳</span>
+          <h2>Pagamento</h2>
         </div>
-        <div id="pay-result" class="result"></div>
+        <div class="card-accent card-accent-payment"></div>
+        <div class="card-body">
+          <div class="inline-group">
+            <select id="pay-method">
+              <option value="credit_card">Cartão</option>
+              <option value="pix">Pix</option>
+              <option value="boleto">Boleto</option>
+              <option value="wallet">Wallet</option>
+            </select>
+            <input id="pay-amount" type="number" placeholder="Valor" step="0.01" value="100" />
+            <button id="btn-pay" class="btn btn-primary">Processar</button>
+          </div>
+          <div id="pay-result" class="msg"></div>
+        </div>
       </section>
 
-      <!-- --- Incidentes --- -->
-      <section class="card incidents">
-        <h2>🚨 Incidentes</h2>
+      <section class="card card-incidents">
+        <div class="card-header">
+          <span class="card-icon">🚨</span>
+          <h2>Incidentes</h2>
+        </div>
+        <div class="card-accent card-accent-incidents"></div>
+        <div class="card-body incidents-list">
 
-        <div class="incident-row">
-          <span>Falha no Login</span>
-          <button id="inc-login" class="toggle off">Desativado</button>
-        </div>
+          <div class="incident-item">
+            <span class="incident-label">Falha no Login</span>
+            <button id="inc-login" class="toggle off">Desativado</button>
+          </div>
 
-        <div class="incident-row">
-          <span>Latência</span>
-          <button id="inc-latency" class="toggle off">Desativado</button>
-        </div>
-        <div class="inc-sub">
-          <label>Delay (ms) <input id="inc-lat-delay" type="number" value="1500" /></label>
-          <label>Jitter (ms) <input id="inc-lat-jitter" type="number" value="500" /></label>
-          <label>Falha % <input id="inc-lat-fail" type="number" value="20" min="0" max="100" /></label>
-        </div>
+          <div class="incident-item">
+            <span class="incident-label">Latência</span>
+            <button id="inc-latency" class="toggle off">Desativado</button>
+          </div>
+          <div class="incident-params">
+            <div class="field">
+              <label>Delay (ms)</label>
+              <input id="inc-lat-delay" type="number" value="1500" />
+            </div>
+            <div class="field">
+              <label>Jitter (ms)</label>
+              <input id="inc-lat-jitter" type="number" value="500" />
+            </div>
+            <div class="field">
+              <label>Falha %</label>
+              <input id="inc-lat-fail" type="number" value="20" min="0" max="100" />
+            </div>
+          </div>
 
-        <div class="incident-row">
-          <span>Pagamento Offline</span>
-          <button id="inc-payment" class="toggle on">Ativado</button>
-        </div>
-        <div class="inc-sub">
-          <label>Falha % <input id="inc-pay-fail" type="number" value="10" min="0" max="100" /></label>
-          <label>Delay (ms) <input id="inc-pay-delay" type="number" value="500" /></label>
-        </div>
+          <hr class="incident-divider" />
 
-        <div class="incident-row">
-          <span>Estoque Zero</span>
-          <button id="inc-inventory" class="toggle off">Desativado</button>
-        </div>
+          <div class="incident-item">
+            <span class="incident-label">Pagamento Offline</span>
+            <button id="inc-payment" class="toggle on">Ativado</button>
+          </div>
+          <div class="incident-params">
+            <div class="field">
+              <label>Falha %</label>
+              <input id="inc-pay-fail" type="number" value="10" min="0" max="100" />
+            </div>
+            <div class="field">
+              <label>Delay (ms)</label>
+              <input id="inc-pay-delay" type="number" value="500" />
+            </div>
+          </div>
 
-        <div class="incident-row">
-          <span>Latência no Carrinho</span>
-          <button id="inc-cart-lat" class="toggle off">Desativado</button>
-        </div>
-        <div class="inc-sub">
-          <label>Delay (ms) <input id="inc-cart-delay" type="number" value="3000" /></label>
-        </div>
+          <hr class="incident-divider" />
 
-        <div class="incident-row">
-          <span>Promoção (90% off)</span>
-          <button id="inc-promotion" class="toggle off">Desativado</button>
-        </div>
+          <div class="incident-item">
+            <span class="incident-label">Estoque Zero</span>
+            <button id="inc-inventory" class="toggle off">Desativado</button>
+          </div>
 
-        <button id="btn-reset-incidents" class="secondary full">🔁 Resetar Todos</button>
-        <div id="inc-result" class="result"></div>
+          <hr class="incident-divider" />
+
+          <div class="incident-item">
+            <span class="incident-label">Latência no Carrinho</span>
+            <button id="inc-cart-lat" class="toggle off">Desativado</button>
+          </div>
+          <div class="incident-params">
+            <div class="field">
+              <label>Delay (ms)</label>
+              <input id="inc-cart-delay" type="number" value="3000" />
+            </div>
+          </div>
+
+          <hr class="incident-divider" />
+
+          <div class="incident-item">
+            <span class="incident-label">Promoção (90% off)</span>
+            <button id="inc-promotion" class="toggle off">Desativado</button>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="btn-reset-incidents" class="btn btn-secondary btn-full" style="flex:1;">Resetar Todos</button>
+          </div>
+          <div id="inc-result" class="msg"></div>
+        </div>
       </section>
 
-      <!-- --- Utilitários --- -->
-      <section class="card">
-        <h2>⚙️ Utilitários</h2>
-        <div class="btns-row">
-          <button id="btn-simulate-load">Simular CPU</button>
-          <button id="btn-simulate-error" class="secondary">Simular Erro</button>
-          <button id="btn-health-live" class="secondary">Health Live</button>
-          <button id="btn-health-ready" class="secondary">Health Ready</button>
+      <section class="card card-utils">
+        <div class="card-header">
+          <span class="card-icon">⚙️</span>
+          <h2>Utilitários</h2>
         </div>
-        <div id="util-result" class="result"></div>
+        <div class="card-accent card-accent-utils"></div>
+        <div class="card-body">
+          <div class="btns-row">
+            <button id="btn-simulate-load" class="btn btn-primary">Simular CPU</button>
+            <button id="btn-simulate-error" class="btn btn-secondary">Simular Erro</button>
+            <button id="btn-health-live" class="btn btn-outline">Health Live</button>
+            <button id="btn-health-ready" class="btn btn-outline">Health Ready</button>
+          </div>
+          <div id="util-result" class="msg"></div>
+        </div>
       </section>
     </div>
   </div>
 
+  <div id="toast-container" class="toast-container"></div>
+
   <script>
-  // ===== Helpers =====
-  const $ = id => document.getElementById(id);
-  const json = r => r.json().catch(()=>({}));
-  const show = (el, msg) => { if (el) el.textContent = msg; };
-  let cartId = localStorage.getItem('cartId') || '';
+    const $ = id => document.getElementById(id);
+    const json = r => r.json().catch(()=>({}));
+    let cartId = localStorage.getItem('cartId') || '';
 
-  function saveCartId(id) {
-    cartId = id;
-    if (id) localStorage.setItem('cartId', id); else localStorage.removeItem('cartId');
-  }
-
-  function headers(extra) {
-    const h = { 'content-type': 'application/json' };
-    if (cartId) h['x-cart-id'] = cartId;
-    return h;
-  }
-
-  function body(data) { return JSON.stringify(data); }
-
-  async function api(method, path, data) {
-    const opts = { method, headers: headers() };
-    if (data) opts.body = body(data);
-    const res = await fetch(path, opts);
-    const ct = res.headers.get('x-cart-id');
-    if (ct) saveCartId(ct);
-    return { res, data: await json(res) };
-  }
-
-  // ===== Usuário =====
-  $('btn-register').addEventListener('click', async () => {
-    const { res, data } = await api('POST', '/register', { username: $('reg-username').value, password: $('reg-password').value });
-    show($('reg-result'), res.ok ? `✅ Registrado (id: ${data.id})` : `❌ ${data.error}`);
-  });
-
-  $('btn-login').addEventListener('click', async () => {
-    const { res, data } = await api('POST', '/login', { username: $('login-username').value, password: $('login-password').value });
-    show($('login-result'), data.success ? '✅ Login OK' : `❌ ${data.error}`);
-  });
-
-  $('btn-list-users').addEventListener('click', async () => {
-    const { data } = await api('GET', '/users');
-    $('users-list').innerHTML = data.map(u => `<li>#${u.id} — ${u.username}</li>`).join('');
-  });
-
-  // ===== Produtos =====
-  async function renderProducts() {
-    const params = new URLSearchParams();
-    const q = $('prod-search').value; if (q) params.set('q', q);
-    const cat = $('prod-category').value; if (cat) params.set('category', cat);
-    const min = $('prod-min').value; if (min) params.set('min_price', min);
-    const max = $('prod-max').value; if (max) params.set('max_price', max);
-    const { data } = await api('GET', `/products?${params}`);
-    $('products-list').innerHTML = data.map(p => `
-      <div class="grid-item">
-        <strong>#${p.id} ${p.name}</strong>
-        <span class="tag">${p.category}</span>
-        <span>R$ ${Number(p.price).toFixed(2)}</span>
-        <span class="${p.stock === 0 ? 'stock-out' : p.stock < 5 ? 'stock-low' : ''}">Estoque: ${p.stock}</span>
-      </div>
-    `).join('');
-  }
-
-  $('btn-list-products').addEventListener('click', renderProducts);
-
-  $('btn-create-product').addEventListener('click', async () => {
-    const { res, data } = await api('POST', '/products', {
-      name: $('np-name').value,
-      category: $('np-cat').value,
-      price: Number($('np-price').value),
-      stock: Number($('np-stock').value) || 0
-    });
-    show($('product-result'), res.ok ? `✅ Criado #${data.id}` : `❌ ${data.error}`);
-    if (res.ok) { renderProducts(); $('np-name').value = $('np-cat').value = $('np-price').value = $('np-stock').value = ''; }
-  });
-
-  // ===== Carrinho =====
-  $('btn-cart-add').addEventListener('click', async () => {
-    const { res, data } = await api('POST', '/cart/add', {
-      productId: Number($('cart-product-id').value),
-      quantity: Number($('cart-qty').value) || 1
-    });
-    show($('cart-detail'), res.ok
-      ? `✅ Adicionado. Total: R$ ${data.total.toFixed(2)} (${data.items.length} itens)`
-      : `❌ ${data.error}`);
-    if (res.ok && data.cartId) saveCartId(data.cartId);
-  });
-
-  $('btn-cart-view').addEventListener('click', async () => {
-    const { data } = await api('GET', '/cart');
-    if (!data.items || !data.items.length) return show($('cart-detail'), '🛒 Carrinho vazio');
-    const lines = data.items.map(i => `• #${i.productId} ${i.name} — ${i.quantity}x R$ ${Number(i.price).toFixed(2)}`).join('\n');
-    show($('cart-detail'), `🛒 Carrinho (${data.items.length} itens):\n${lines}\nTotal: R$ ${data.total.toFixed(2)}`);
-  });
-
-  $('btn-cart-clear').addEventListener('click', async () => {
-    await api('DELETE', '/cart');
-    show($('cart-detail'), '🗑️ Carrinho limpo');
-  });
-
-  // ===== Checkout & Pedidos =====
-  $('btn-checkout').addEventListener('click', async () => {
-    const { res, data } = await api('POST', '/checkout', { paymentMethod: $('checkout-method').value });
-    show($('checkout-result'), res.ok
-      ? `✅ Pedido #${data.id} — R$ ${data.total.toFixed(2)}`
-      : `❌ ${data.error || 'falha no pagamento'}`);
-  });
-
-  $('btn-list-orders').addEventListener('click', async () => {
-    const { data } = await api('GET', '/orders');
-    $('orders-list').innerHTML = (Array.isArray(data) ? data : []).map(o => `
-      <div class="grid-item">
-        <strong>Pedido #${o.id}</strong>
-        <span class="tag ${o.status === 'confirmed' ? 'tag-ok' : 'tag-warn'}">${o.status}</span>
-        <span>R$ ${Number(o.total).toFixed(2)}</span>
-        <span>${o.items ? o.items.length : 0} itens</span>
-      </div>
-    `).join('');
-  });
-
-  // ===== Pagamento Avulso =====
-  $('btn-pay').addEventListener('click', async () => {
-    const { res, data } = await api('POST', '/payment/process', {
-      method: $('pay-method').value,
-      amount: Number($('pay-amount').value)
-    });
-    show($('pay-result'), res.ok
-      ? `✅ Pagamento ${data.paymentId} — ${data.status}`
-      : `❌ ${data.error}`);
-  });
-
-  // ===== Incidentes =====
-  const TOGGLE_API = {
-    'inc-login':      ['/internal/incidents/login-failure',  'loginFailureEnabled'],
-    'inc-latency':    ['/internal/incidents/latency',        'latencyEnabled'],
-    'inc-payment':    ['/internal/incidents/payment',        'paymentEnabled'],
-    'inc-inventory':  ['/internal/incidents/inventory',      'inventoryZeroEnabled'],
-    'inc-cart-lat':   ['/internal/incidents/cart-latency',   'cartLatencyEnabled'],
-    'inc-promotion':  ['/internal/incidents/promotion',      'promotionEnabled'],
-  };
-
-  Object.entries(TOGGLE_API).forEach(([btnId, [path, key]]) => {
-    $(btnId).addEventListener('click', async () => {
-      const btn = $(btnId);
-      const currentlyOn = btn.classList.contains('on');
-      const payload = { enabled: !currentlyOn };
-
-      // Extra fields for latency
-      if (path.includes('latency') && !path.includes('cart')) {
-        payload.delayMs = Number($('inc-lat-delay').value);
-        payload.jitterMs = Number($('inc-lat-jitter').value);
-        payload.failureRatePercent = Number($('inc-lat-fail').value);
-      }
-      if (path.includes('payment')) {
-        payload.failureRatePercent = Number($('inc-pay-fail').value);
-        payload.delayMs = Number($('inc-pay-delay').value);
-      }
-      if (path.includes('cart-latency')) {
-        payload.delayMs = Number($('inc-cart-delay').value);
-      }
-
-      const { res, data } = await api('POST', path, payload);
-      if (res.ok) {
-        const isOn = data.enabled !== undefined ? data.enabled : (data[key] !== undefined ? data[key] : !currentlyOn);
-        btn.classList.toggle('on', !!isOn);
-        btn.classList.toggle('off', !isOn);
-        btn.textContent = isOn ? 'Ativado' : 'Desativado';
-        show($('inc-result'), `✅ Incidente ${isOn ? 'ativado' : 'desativado'}`);
-      } else {
-        show($('inc-result'), `❌ ${data.error}`);
-      }
-    });
-  });
-
-  $('btn-reset-incidents').addEventListener('click', async () => {
-    const { res } = await api('POST', '/internal/incidents/reset');
-    if (res.ok) {
-      document.querySelectorAll('.toggle').forEach(btn => {
-        const isOnDefault = btn.id === 'inc-payment';
-        btn.classList.toggle('on', isOnDefault);
-        btn.classList.toggle('off', !isOnDefault);
-        btn.textContent = isOnDefault ? 'Ativado' : 'Desativado';
-      });
-      show($('inc-result'), '✅ Todos incidentes resetados');
+    function saveCartId(id) {
+      cartId = id;
+      if (id) localStorage.setItem('cartId', id); else localStorage.removeItem('cartId');
     }
-  });
 
-  // ===== Utilitários =====
-  $('btn-simulate-load').addEventListener('click', async () => {
-    const { data } = await api('GET', '/simulate-load?iterations=5000000');
-    show($('util-result'), `⚡ Load concluído — checksum: ${data.checksum}`);
-  });
+    function headers(extra) {
+      const h = { 'content-type': 'application/json' };
+      if (cartId) h['x-cart-id'] = cartId;
+      return h;
+    }
 
-  $('btn-simulate-error').addEventListener('click', async () => {
-    try { await fetch('/simulate-error'); } catch {}
-    show($('util-result'), '💥 Erro simulado (ver logs)');
-  });
+    function body(data) { return JSON.stringify(data); }
 
-  $('btn-health-live').addEventListener('click', async () => {
-    const { data } = await api('GET', '/health/live');
-    show($('util-result'), `❤️ ${data.status} (uptime: ${Math.floor(data.uptime)}s)`);
-  });
+    async function api(method, path, data) {
+      const opts = { method, headers: headers() };
+      if (data) opts.body = body(data);
+      const res = await fetch(path, opts);
+      const ct = res.headers.get('x-cart-id');
+      if (ct) saveCartId(ct);
+      return { res, data: await json(res) };
+    }
 
-  $('btn-health-ready').addEventListener('click', async () => {
-    const { data } = await api('GET', '/health/ready');
-    show($('util-result'), `✅ ${data.status}`);
-  });
+    function showToast(msg, type) {
+      const container = $('toast-container');
+      const el = document.createElement('div');
+      el.className = 'toast toast-' + (type || 'info');
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.classList.add('toast-exit');
+        setTimeout(() => el.remove(), 250);
+      }, 3500);
+    }
 
-  // ===== Init =====
-  renderProducts();
+    function setMsg(el, msg, isError) {
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'msg' + (msg.startsWith('✅') || msg.startsWith('❤️') || msg.startsWith('⚡') ? ' msg-success' : msg.startsWith('❌') || msg.startsWith('💥') ? ' msg-error' : ' msg-info');
+    }
+
+    $('btn-register').addEventListener('click', async () => {
+      const { res, data } = await api('POST', '/register', { username: $('reg-username').value, password: $('reg-password').value });
+      const msg = res.ok ? '✅ Registrado com sucesso (id: ' + data.id + ')' : '❌ ' + data.error;
+      setMsg($('reg-result'), msg);
+      showToast(msg, res.ok ? 'success' : 'error');
+    });
+
+    $('btn-login').addEventListener('click', async () => {
+      const { res, data } = await api('POST', '/login', { username: $('login-username').value, password: $('login-password').value });
+      const msg = data.success ? '✅ Login realizado com sucesso' : '❌ ' + data.error;
+      setMsg($('login-result'), msg);
+      showToast(msg, data.success ? 'success' : 'error');
+    });
+
+    $('btn-list-users').addEventListener('click', async () => {
+      const { data } = await api('GET', '/users');
+      const items = data.map(u => '<li>#' + u.id + ' &mdash; ' + u.username + '</li>').join('');
+      $('users-list').innerHTML = items;
+      showToast(data.length + ' usuário(s) encontrado(s)', 'info');
+    });
+
+    async function renderProducts() {
+      const params = new URLSearchParams();
+      const q = $('prod-search').value; if (q) params.set('q', q);
+      const cat = $('prod-category').value; if (cat) params.set('category', cat);
+      const min = $('prod-min').value; if (min) params.set('min_price', min);
+      const max = $('prod-max').value; if (max) params.set('max_price', max);
+      const { data } = await api('GET', '/products?' + params);
+      $('products-list').innerHTML = data.map(p =>
+        '<div class="grid-item">' +
+          '<strong>#' + p.id + ' ' + p.name + '</strong>' +
+          '<span class="tag">' + p.category + '</span>' +
+          '<span>R$ ' + Number(p.price).toFixed(2) + '</span>' +
+          '<span class="' + (p.stock === 0 ? 'stock-out' : p.stock < 5 ? 'stock-low' : '') + '">Estoque: ' + p.stock + '</span>' +
+        '</div>'
+      ).join('');
+    }
+
+    $('btn-list-products').addEventListener('click', renderProducts);
+
+    $('btn-create-product').addEventListener('click', async () => {
+      const { res, data } = await api('POST', '/products', {
+        name: $('np-name').value,
+        category: $('np-cat').value,
+        price: Number($('np-price').value),
+        stock: Number($('np-stock').value) || 0
+      });
+      const msg = res.ok ? '✅ Produto criado #' + data.id : '❌ ' + data.error;
+      setMsg($('product-result'), msg);
+      showToast(msg, res.ok ? 'success' : 'error');
+      if (res.ok) {
+        renderProducts();
+        $('np-name').value = $('np-cat').value = $('np-price').value = $('np-stock').value = '';
+      }
+    });
+
+    $('btn-cart-add').addEventListener('click', async () => {
+      const { res, data } = await api('POST', '/cart/add', {
+        productId: Number($('cart-product-id').value),
+        quantity: Number($('cart-qty').value) || 1
+      });
+      const msg = res.ok
+        ? '✅ Adicionado ao carrinho. Total: R$ ' + data.total.toFixed(2) + ' (' + data.items.length + ' itens)'
+        : '❌ ' + data.error;
+      setMsg($('cart-detail'), msg);
+      showToast(msg, res.ok ? 'success' : 'error');
+      if (res.ok && data.cartId) saveCartId(data.cartId);
+    });
+
+    $('btn-cart-view').addEventListener('click', async () => {
+      const { data } = await api('GET', '/cart');
+      if (!data.items || !data.items.length) {
+        const msg = '🛒 Carrinho vazio';
+        setMsg($('cart-detail'), msg);
+        showToast(msg, 'info');
+        return;
+      }
+      const lines = data.items.map(i => '• #' + i.productId + ' ' + i.name + ' &mdash; ' + i.quantity + 'x R$ ' + Number(i.price).toFixed(2)).join('\n');
+      const msg = '🛒 Carrinho (' + data.items.length + ' itens):\n' + lines + '\nTotal: R$ ' + data.total.toFixed(2);
+      setMsg($('cart-detail'), msg);
+    });
+
+    $('btn-cart-clear').addEventListener('click', async () => {
+      await api('DELETE', '/cart');
+      const msg = '🗑️ Carrinho limpo';
+      setMsg($('cart-detail'), msg);
+      showToast(msg, 'info');
+    });
+
+    $('btn-checkout').addEventListener('click', async () => {
+      const { res, data } = await api('POST', '/checkout', { paymentMethod: $('checkout-method').value });
+      const msg = res.ok
+        ? '✅ Pedido #' + data.id + ' — R$ ' + data.total.toFixed(2)
+        : '❌ ' + (data.error || 'Falha no pagamento');
+      setMsg($('checkout-result'), msg);
+      showToast(msg, res.ok ? 'success' : 'error');
+    });
+
+    $('btn-list-orders').addEventListener('click', async () => {
+      const { data } = await api('GET', '/orders');
+      const items = (Array.isArray(data) ? data : []).map(o =>
+        '<div class="grid-item">' +
+          '<strong>Pedido #' + o.id + '</strong>' +
+          '<span class="tag ' + (o.status === 'confirmed' ? 'tag-ok' : 'tag-warn') + '">' + o.status + '</span>' +
+          '<span>R$ ' + Number(o.total).toFixed(2) + '</span>' +
+          '<span>' + (o.items ? o.items.length : 0) + ' itens</span>' +
+        '</div>'
+      ).join('');
+      $('orders-list').innerHTML = items || '<div class="msg msg-info">Nenhum pedido encontrado</div>';
+    });
+
+    $('btn-pay').addEventListener('click', async () => {
+      const { res, data } = await api('POST', '/payment/process', {
+        method: $('pay-method').value,
+        amount: Number($('pay-amount').value)
+      });
+      const msg = res.ok
+        ? '✅ Pagamento ' + data.paymentId + ' — ' + data.status
+        : '❌ ' + data.error;
+      setMsg($('pay-result'), msg);
+      showToast(msg, res.ok ? 'success' : 'error');
+    });
+
+    const TOGGLE_API = {
+      'inc-login':      ['/internal/incidents/login-failure',  'loginFailureEnabled'],
+      'inc-latency':    ['/internal/incidents/latency',        'latencyEnabled'],
+      'inc-payment':    ['/internal/incidents/payment',        'paymentEnabled'],
+      'inc-inventory':  ['/internal/incidents/inventory',      'inventoryZeroEnabled'],
+      'inc-cart-lat':   ['/internal/incidents/cart-latency',   'cartLatencyEnabled'],
+      'inc-promotion':  ['/internal/incidents/promotion',      'promotionEnabled'],
+    };
+
+    Object.entries(TOGGLE_API).forEach(([btnId, [path, key]]) => {
+      $(btnId).addEventListener('click', async () => {
+        const btn = $(btnId);
+        const currentlyOn = btn.classList.contains('on');
+        const payload = { enabled: !currentlyOn };
+
+        if (path.includes('latency') && !path.includes('cart')) {
+          payload.delayMs = Number($('inc-lat-delay').value);
+          payload.jitterMs = Number($('inc-lat-jitter').value);
+          payload.failureRatePercent = Number($('inc-lat-fail').value);
+        }
+        if (path.includes('payment')) {
+          payload.failureRatePercent = Number($('inc-pay-fail').value);
+          payload.delayMs = Number($('inc-pay-delay').value);
+        }
+        if (path.includes('cart-latency')) {
+          payload.delayMs = Number($('inc-cart-delay').value);
+        }
+
+        const { res, data } = await api('POST', path, payload);
+        if (res.ok) {
+          const isOn = data.enabled !== undefined ? data.enabled : (data[key] !== undefined ? data[key] : !currentlyOn);
+          btn.classList.toggle('on', !!isOn);
+          btn.classList.toggle('off', !isOn);
+          btn.textContent = isOn ? 'Ativado' : 'Desativado';
+          const msg = '✅ Incidente ' + (isOn ? 'ativado' : 'desativado');
+          setMsg($('inc-result'), msg);
+          showToast(msg, 'success');
+        } else {
+          const msg = '❌ ' + data.error;
+          setMsg($('inc-result'), msg);
+          showToast(msg, 'error');
+        }
+      });
+    });
+
+    $('btn-reset-incidents').addEventListener('click', async () => {
+      const { res } = await api('POST', '/internal/incidents/reset');
+      if (res.ok) {
+        document.querySelectorAll('.toggle').forEach(btn => {
+          const isOnDefault = btn.id === 'inc-payment';
+          btn.classList.toggle('on', isOnDefault);
+          btn.classList.toggle('off', !isOnDefault);
+          btn.textContent = isOnDefault ? 'Ativado' : 'Desativado';
+        });
+        const msg = '✅ Todos os incidentes foram resetados';
+        setMsg($('inc-result'), msg);
+        showToast(msg, 'success');
+      }
+    });
+
+    $('btn-simulate-load').addEventListener('click', async () => {
+      const { data } = await api('GET', '/simulate-load?iterations=5000000');
+      const msg = '⚡ Carga simulada — checksum: ' + data.checksum;
+      setMsg($('util-result'), msg);
+      showToast(msg, 'success');
+    });
+
+    $('btn-simulate-error').addEventListener('click', async () => {
+      try { await fetch('/simulate-error'); } catch {}
+      const msg = '💥 Erro simulado (verifique os logs)';
+      setMsg($('util-result'), msg);
+      showToast(msg, 'error');
+    });
+
+    $('btn-health-live').addEventListener('click', async () => {
+      const { data } = await api('GET', '/health/live');
+      const msg = '❤️ ' + data.status + ' (uptime: ' + Math.floor(data.uptime) + 's)';
+      setMsg($('util-result'), msg);
+    });
+
+    $('btn-health-ready').addEventListener('click', async () => {
+      const { data } = await api('GET', '/health/ready');
+      const msg = '✅ ' + data.status;
+      setMsg($('util-result'), msg);
+    });
+
+    renderProducts();
   </script>
 </body>
 </html>
